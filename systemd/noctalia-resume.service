@@ -1,0 +1,12 @@
+[Unit]
+Description=Auto-restart Noctalia bar after sleep/suspend
+After=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+
+[Service]
+Type=oneshot
+User=%I
+ExecStart=/home/%I/.local/bin/fix-noctalia-resume.sh
+Environment=PATH=/usr/local/bin:/usr/bin:/bin:/home/%I/.local/bin
+
+[Install]
+WantedBy=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target

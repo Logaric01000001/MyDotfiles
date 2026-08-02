@@ -17,12 +17,13 @@ spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
 // Demonio de notificaciones (Opcional si Noctalia no provee centro de notificaciones)
 // spawn-at-startup "mako"
 
-// Bloqueo y gestión de inactividad (bloquea a los 5 min con hyprlock, apaga pantallas a los 10 min)
+// Bloqueo y gestión de inactividad (bloquea a los 5 min con hyprlock, apaga pantallas a los 10 min, restaura Noctalia al reanudar)
 spawn-at-startup "swayidle" "-w" \
     "timeout" "300" "hyprlock" \
     "timeout" "600" "niri msg action power-off-monitors" \
     "resume" "niri msg action power-on-monitors" \
-    "before-sleep" "hyprlock"
+    "before-sleep" "hyprlock" \
+    "after-resume" "fix-noctalia-resume.sh"
 
 
 // -----------------------------------------------------------------------------

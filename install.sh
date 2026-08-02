@@ -213,6 +213,22 @@ if [ -f "$DOTFILES_DIR/scripts/help-menu.sh" ]; then
     echo -e "   ${GREEN}✔ Guía interactiva instalada:${NC} ~/.local/bin/help-menu"
 fi
 
+if [ -f "$DOTFILES_DIR/scripts/fix-noctalia-resume.sh" ]; then
+    cp -f "$DOTFILES_DIR/scripts/fix-noctalia-resume.sh" "$HOME/.local/bin/fix-noctalia-resume.sh"
+    chmod +x "$HOME/.local/bin/fix-noctalia-resume.sh"
+    echo -e "   ${GREEN}✔ Script de reanudación instalado:${NC} ~/.local/bin/fix-noctalia-resume.sh"
+fi
+
+# Servicio systemd para restaurar Noctalia tras suspender/hibernar
+if [ -f "$DOTFILES_DIR/systemd/noctalia-resume.service" ]; then
+    echo -e "\n${BLUE}⚡ Configurando servicio de reanudación de Noctalia...${NC}"
+    sudo cp -f "$DOTFILES_DIR/systemd/noctalia-resume.service" "/etc/systemd/system/noctalia-resume@.service" 2>/dev/null && \
+    sudo systemctl daemon-reload 2>/dev/null && \
+    sudo systemctl enable "noctalia-resume@$(whoami).service" 2>/dev/null && \
+    echo -e "   ${GREEN}✔ Servicio noctalia-resume habilitado (Noctalia se restaura automáticamente al abrir la tapa).${NC}" || \
+    echo -e "   ${YELLOW}⚠️  No se pudo instalar el servicio systemd (requiere permisos de administrador).${NC}"
+fi
+
 # Configuración personalizada de pantalla de inicio SDDM
 if [ -d "/usr/share/sddm/themes/SilentSDDM" ] && [ -f "$DOTFILES_DIR/sddm/default-left.conf" ]; then
     if [ -w "/usr/share/sddm/themes/SilentSDDM/configs" ]; then

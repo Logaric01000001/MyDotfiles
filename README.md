@@ -152,7 +152,8 @@ MyDotfiles/
 ├── kitty/
 │   └── kitty.conf          # Configuración de terminal (sin sonido de campana)
 ├── fastfetch/
-│   └── config.jsonc        # Resumen del sistema modular y fácil de personalizar
+│   ├── config.jsonc        # Resumen del sistema modular y fácil de personalizar
+│   └── logo.txt            # Logo ASCII personalizable (Log4ric por defecto)
 ├── rofi/
 │   └── config.rasi         # Menú y lanzador de aplicaciones (Catppuccin Mocha)
 ├── noctalia/
@@ -161,7 +162,11 @@ MyDotfiles/
 │   └── default-left.conf   # Pantalla de inicio SDDM personalizada (Catppuccin Mocha)
 ├── scripts/
 │   ├── set-wallpaper.sh    # Gestor universal de fondos (Adentro, Afuera o Todo)
-│   └── help-menu.sh        # Menú interactivo de ayuda y lanzador (Mod+Shift+H)
+│   ├── help-menu.sh        # Menú interactivo de ayuda y lanzador (Mod+Shift+H)
+│   └── fix-noctalia-resume.sh  # Restaura Noctalia al abrir la tapa del laptop
+├── systemd/
+│   └── noctalia-resume.service  # Servicio systemd para restaurar la barra tras suspender
 ├── install.sh               # Script instalador automático
 └── README.md                # Documentación y atajos
 ```
+
