@@ -128,10 +128,10 @@ Cualquier persona solo necesita ejecutar un solo comando en su terminal:
 
 ```bash
 # Opción A (Directo con 1 solo comando):
-bash <(curl -s https://raw.githubusercontent.com/tu-usuario/MyDotfiles/main/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/Logaric01000001/MyDotfiles/main/install.sh)
 
 # Opción B (Clonando manualmente):
-git clone https://github.com/tu-usuario/MyDotfiles.git ~/MyDotfiles
+git clone https://github.com/Logaric01000001/MyDotfiles.git ~/MyDotfiles
 cd ~/MyDotfiles
 ./install.sh
 ```

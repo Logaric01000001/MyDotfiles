@@ -35,7 +35,7 @@ fi
 
 if [ ! -f "$DOTFILES_DIR/config.kdl" ]; then
     echo -e "${BLUE}📥 [Paso Previo] Descargando repositorio en ${DOTFILES_DIR}...${NC}"
-    git clone https://github.com/tu-usuario/MyDotfiles.git "$DOTFILES_DIR" || {
+    git clone https://github.com/Logaric01000001/MyDotfiles.git "$DOTFILES_DIR" || {
         echo -e "${RED}❌ No se pudo descargar el repositorio. Verifica tu conexión a internet.${NC}"
         exit 1
     }
