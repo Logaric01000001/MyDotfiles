@@ -22,8 +22,8 @@ spawn-at-startup "swayidle" "-w" \
     "timeout" "300" "hyprlock" \
     "timeout" "600" "niri msg action power-off-monitors" \
     "resume" "niri msg action power-on-monitors" \
-    "before-sleep" "hyprlock" \
-    "after-resume" "fix-noctalia-resume.sh"
+    "resume" "$HOME/.local/bin/fix-noctalia-resume.sh" \
+    "before-sleep" "hyprlock"
 
 
 // -----------------------------------------------------------------------------
@@ -225,14 +225,17 @@ binds {
     // -------------------------------------------------------------------------
     // Atajos de Sistema y Ayuda
     // -------------------------------------------------------------------------
-    Mod+Shift+H { spawn "help-menu"; }       // Menú interactivo de ayuda y lanzador en Rofi (Help)
-    Mod+Shift+Slash { spawn "help-menu"; }   // Alias alternativo (Mod + ?)
+    Mod+Shift+H { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH help-menu"; }       // Menú interactivo de ayuda (Help)
+    Mod+Shift+Slash { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH help-menu"; }   // Alias alternativo (Mod + ?)
     Mod+Shift+E { quit; }
     Mod+Shift+Q { close-window; }
     Mod+Q { close-window; }
 
     // Bloqueo de pantalla manual
-    Mod+L { spawn "hyprlock"; } // Bloquear pantalla
+    Mod+L { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH lock-and-restore.sh"; } // Bloquear pantalla y restaurar Noctalia
+
+    // Menú de energía (apagado, reinicio, suspend, logout)
+    Mod+S { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH power-menu.sh"; } // Menú de energía
 
     // Panel de Configuración y Ajustes de Noctalia Shell
     Mod+A { spawn "noctalia" "msg" "settings-open"; } // Ajustes de barra y sistema (Noctalia)
@@ -241,6 +244,7 @@ binds {
     // Lanzadores de Aplicaciones y Herramientas Predeterminadas
     // -------------------------------------------------------------------------
     Mod+Return { spawn "kitty"; } // Terminal (Kitty)
+    Mod+C { spawn "bash" "-c" "codium || vscodium || code"; } // VScodium / VS Code
 
     // Menú de aplicaciones (Rofi)
     Mod+D     { spawn "rofi" "-show" "drun"; } // Lanzador de aplicaciones
@@ -253,10 +257,10 @@ binds {
     Mod+E { spawn "thunar"; } // Gestor de archivos (Thunar)
 
     // Fondos de Pantalla
-    Mod+W       { spawn "set-wallpaper" "select-all"; }     // Fondo de pantalla (Escritorio + Pantalla de inicio)
-    Mod+Ctrl+W  { spawn "set-wallpaper" "select-inside"; }  // Fondo de pantalla (Solo escritorio)
-    Mod+Alt+W   { spawn "set-wallpaper" "select-outside"; } // Fondo de pantalla (Solo pantalla de inicio SDDM)
-    Mod+Shift+W { spawn "set-wallpaper" "select-outside"; } // Fondo de pantalla (Solo pantalla de inicio SDDM)
+    Mod+W       { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH set-wallpaper select-all"; }     // Fondo de pantalla (Escritorio + SDDM)
+    Mod+Ctrl+W  { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH set-wallpaper select-inside"; }  // Fondo de pantalla (Solo escritorio)
+    Mod+Alt+W   { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH set-wallpaper select-outside"; } // Fondo de pantalla (Solo SDDM)
+    Mod+Shift+W { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH set-wallpaper select-outside"; } // Fondo de pantalla (Solo SDDM)
 
     // -------------------------------------------------------------------------
     // Navegación de Columnas y Ventanas (Izquierda / Derecha / Arriba / Abajo)
@@ -332,7 +336,7 @@ binds {
     Mod+F { maximize-column; }
     Mod+Shift+F { fullscreen-window; }
     Mod+M { maximize-column; }
-    Mod+C { center-column; }
+    Mod+Shift+C { center-column; } // Centrar columna
 
     // Alternar modo flotante para una ventana individual
     Mod+V { toggle-window-floating; }

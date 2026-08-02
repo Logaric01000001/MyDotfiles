@@ -133,6 +133,11 @@ if ! command -v zen-browser &>/dev/null; then
     $AUR_HELPER -S --needed --noconfirm zen-browser-bin || true
 fi
 
+if ! command -v codium &>/dev/null && ! command -v vscodium &>/dev/null; then
+    echo -e "${BLUE}📦 Instalando VScodium desde AUR...${NC}"
+    $AUR_HELPER -S --needed --noconfirm vscodium-bin || true
+fi
+
 # -----------------------------------------------------------------------------
 # 4. CREACIÓN DE DIRECTORIOS Y SISTEMA DE RESPALDO SEGURO
 # -----------------------------------------------------------------------------
@@ -199,7 +204,7 @@ if [ -f "$DOTFILES_DIR/fastfetch/logo.txt" ]; then
     safe_install_file "$DOTFILES_DIR/fastfetch/logo.txt" "$HOME/.config/fastfetch/logo.txt"
 fi
 
-# Instalar utilidades personalizadas (help-menu y set-wallpaper)
+# Instalación de utilidades personalizadas (help-menu, set-wallpaper y lock-and-restore)
 mkdir -p "$HOME/.local/bin"
 if [ -f "$DOTFILES_DIR/scripts/set-wallpaper.sh" ]; then
     cp -f "$DOTFILES_DIR/scripts/set-wallpaper.sh" "$HOME/.local/bin/set-wallpaper"
@@ -211,6 +216,17 @@ if [ -f "$DOTFILES_DIR/scripts/help-menu.sh" ]; then
     cp -f "$DOTFILES_DIR/scripts/help-menu.sh" "$HOME/.local/bin/help-menu"
     chmod +x "$HOME/.local/bin/help-menu"
     echo -e "   ${GREEN}✔ Guía interactiva instalada:${NC} ~/.local/bin/help-menu"
+fi
+
+if [ -f "$DOTFILES_DIR/scripts/lock-and-restore.sh" ]; then
+    cp -f "$DOTFILES_DIR/scripts/lock-and-restore.sh" "$HOME/.local/bin/lock-and-restore.sh"
+    chmod +x "$HOME/.local/bin/lock-and-restore.sh"
+    echo -e "   ${GREEN}✔ Script de bloqueo/restauración instalado:${NC} ~/.local/bin/lock-and-restore.sh"
+fi
+if [ -f "$DOTFILES_DIR/scripts/power-menu.sh" ]; then
+    cp -f "$DOTFILES_DIR/scripts/power-menu.sh" "$HOME/.local/bin/power-menu.sh"
+    chmod +x "$HOME/.local/bin/power-menu.sh"
+    echo -e "   ${GREEN}✔ Menú de potencia instalado:${NC} ~/.local/bin/power-menu.sh"
 fi
 
 if [ -f "$DOTFILES_DIR/scripts/fix-noctalia-resume.sh" ]; then
@@ -244,6 +260,14 @@ if [ -d "/usr/share/sddm/themes/SilentSDDM/backgrounds" ]; then
     cp -n /usr/share/sddm/themes/SilentSDDM/backgrounds/* "$HOME/Imágenes/Fondos/" 2>/dev/null || true
 fi
 
+# Asegurar ~/.local/bin en el PATH de la shell
+for rfile in "$HOME/.zshrc" "$HOME/.bashrc"; do
+    if [ -f "$rfile" ] && ! grep -q '\.local/bin' "$rfile"; then
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$rfile"
+        echo -e "   ${GREEN}✔ PATH configurado en:${NC} $rfile"
+    fi
+done
+
 # -----------------------------------------------------------------------------
 # 6. RECARGA EN VIVO (SI NIRI O NOCTALIA YA ESTÁN EN EJECUCIÓN)
 # -----------------------------------------------------------------------------
@@ -270,13 +294,15 @@ fi
 echo -e "${BOLD}Resumen de atajos configurados:${NC}"
 echo -e "  • ${CYAN}Mod + Shift + H${NC}    → Guía interactiva de atajos en pantalla (Help)"
 echo -e "  • ${CYAN}Mod + Enter${NC}        → Terminal (Kitty)"
+echo -e "  • ${CYAN}Mod + C${NC}            → Editor de código (VScodium)"
+echo -e "  • ${CYAN}Mod + S${NC}            → Menú de Energía (Apagar, Reiniciar, Bloquear, Logout)"
 echo -e "  • ${CYAN}Mod + D / Espacio${NC}  → Lanzador de aplicaciones (Rofi minimalista)"
 echo -e "  • ${CYAN}Mod + B${NC}            → Navegador Web (Zen Browser)"
 echo -e "  • ${CYAN}Mod + W${NC}            → Cambiar fondo de TODO (Escritorio + Pantalla de inicio)"
 echo -e "  • ${CYAN}Mod + Ctrl + W${NC}     → Cambiar SOLO fondo de ADENTRO (Escritorio)"
 echo -e "  • ${CYAN}Mod + Alt + W${NC}      → Cambiar SOLO fondo de AFUERA (Pantalla de inicio SDDM)"
 echo -e "  • ${CYAN}Mod + A${NC}            → Panel de Ajustes y Barra (Noctalia)"
-echo -e "  • ${CYAN}Mod + L${NC}            → Bloquear pantalla (Hyprlock)"
+echo -e "  • ${CYAN}Mod + L${NC}            → Bloquear pantalla (Hyprlock + Auto-restaurar Noctalia)"
 echo -e "  • ${CYAN}Mod + F${NC}            → Maximizar columna (manteniendo barra)"
 echo -e "  • ${CYAN}Mod + Shift + F${NC}    → Pantalla completa total"
 echo -e "  • ${CYAN}Mod + Q${NC}            → Cerrar ventana activa"

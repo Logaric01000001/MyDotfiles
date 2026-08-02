@@ -22,10 +22,12 @@ Configuración completa, estética y ultra rápida para el compositor scrollable
 ### 🚀 Lanzadores de Aplicaciones
 | Atajo | Acción |
 | :--- | :--- |
-| <kbd>Mod</kbd> + <kbd>Return</kbd> | Abrir Terminal (Kitty / Alacritty) |
-| <kbd>Mod</kbd> + <kbd>D</kbd> o <kbd>Mod</kbd> + <kbd>Espacio</kbd> | Lanzador de Aplicaciones (Rofi / Noctalia) |
+| <kbd>Mod</kbd> + <kbd>Return</kbd> | Abrir Terminal (Kitty) |
+| <kbd>Mod</kbd> + <kbd>C</kbd> | **Editor de Código** (VScodium) |
+| <kbd>Mod</kbd> + <kbd>S</kbd> | **Menú de Energía** (Apagar, Reiniciar, Bloquear, Suspender, Logout) |
+| <kbd>Mod</kbd> + <kbd>D</kbd> o <kbd>Mod</kbd> + <kbd>Espacio</kbd> | Lanzador de Aplicaciones (Rofi) |
 | <kbd>Mod</kbd> + <kbd>B</kbd> | **Navegador Web** (Zen Browser) |
-| <kbd>Mod</kbd> + <kbd>E</kbd> | Gestor de Archivos (Thunar / Dolphin) |
+| <kbd>Mod</kbd> + <kbd>E</kbd> | Gestor de Archivos (Thunar) |
 | <kbd>Mod</kbd> + <kbd>W</kbd> | **Cambiar TODO** (Fondo Escritorio + Pantalla de Inicio) |
 | <kbd>Mod</kbd> + <kbd>Ctrl</kbd> + <kbd>W</kbd> | **Cambiar SOLO Adentro** (Fondo del Escritorio) |
 | <kbd>Mod</kbd> + <kbd>Alt</kbd> + <kbd>W</kbd> | **Cambiar SOLO Afuera** (Fondo de Pantalla de Inicio SDDM) |
@@ -163,6 +165,8 @@ MyDotfiles/
 ├── scripts/
 │   ├── set-wallpaper.sh    # Gestor universal de fondos (Adentro, Afuera o Todo)
 │   ├── help-menu.sh        # Menú interactivo de ayuda y lanzador (Mod+Shift+H)
+│   ├── power-menu.sh       # Menú de energía en Rofi (Mod+S)
+│   ├── lock-and-restore.sh # Wrapper para hyprlock y auto-restaurar Noctalia (Mod+L)
 │   └── fix-noctalia-resume.sh  # Restaura Noctalia al abrir la tapa del laptop
 ├── systemd/
 │   └── noctalia-resume.service  # Servicio systemd para restaurar la barra tras suspender
