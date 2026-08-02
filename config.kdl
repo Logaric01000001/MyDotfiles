@@ -1,0 +1,365 @@
+// =============================================================================
+//   NIRI COMPOSITOR - ARCH LINUX CONFIGURATION
+//   Archivo maestro: config.kdl
+//   Estética: Catppuccin Mocha / Noctalia Shell
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// 1. AUTOSTART & SERVICIOS DE FONDO (Shell, Autenticación y Wallpaper)
+// -----------------------------------------------------------------------------
+
+// Shell de escritorio (Noctalia)
+spawn-at-startup "noctalia"
+
+// Agente de autenticación Polkit GNOME (Ruta estándar en Arch Linux)
+spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
+
+// Demonio de notificaciones (Opcional si Noctalia no provee centro de notificaciones)
+// spawn-at-startup "mako"
+
+// Bloqueo y gestión de inactividad (bloquea a los 5 min con hyprlock, apaga pantallas a los 10 min)
+spawn-at-startup "swayidle" "-w" \
+    "timeout" "300" "hyprlock" \
+    "timeout" "600" "niri msg action power-off-monitors" \
+    "resume" "niri msg action power-on-monitors" \
+    "before-sleep" "hyprlock"
+
+
+// -----------------------------------------------------------------------------
+// 2. PREFERENCIAS GENERALES Y ENTORNO
+// -----------------------------------------------------------------------------
+
+// Preferir decoraciones en el lado del servidor o sin barra de título CSD
+prefer-no-csd
+
+// Variables de entorno para Wayland y compatibilidad
+environment {
+    QT_QPA_PLATFORM "wayland;xcb"
+    ELECTRON_OZONE_PLATFORM_HINT "auto"
+}
+
+// Ruta y formato para guardar capturas de pantalla automáticas
+screenshot-path "~/Imágenes/Capturas/screenshot-%Y-%m-%d-%H-%M-%S.png"
+
+
+// -----------------------------------------------------------------------------
+// 3. DISPOSITIVOS DE ENTRADA (Teclado, Touchpad y Ratón)
+// -----------------------------------------------------------------------------
+input {
+    keyboard {
+        xkb {
+            // Distribución latinoamericana y española con alternancia Alt+Shift
+            layout "latam,es"
+            options "grp:alt_shift_toggle"
+        }
+        // Repetición rápida y responsiva para escribir/navegar con fluidez
+        repeat-delay 300
+        repeat-rate 50
+    }
+
+    touchpad {
+        // Habilitar pulsación táctil
+        tap
+        // Deshabilitar touchpad temporalmente mientras se escribe
+        dwt
+        // Desplazamiento natural (estilo smartphone/touch)
+        natural-scroll
+        // Sensibilidad y aceleración adaptativa
+        accel-speed 0.2
+        accel-profile "adaptive"
+        // Emulación de botón central (pulsar con 3 dedos)
+        middle-emulation
+    }
+
+    mouse {
+        accel-speed 0.0
+        accel-profile "flat"
+    }
+
+    // Enfocar automáticamente la ventana al pasar el cursor sobre ella (Focus follows mouse)
+    focus-follows-mouse
+}
+
+
+// -----------------------------------------------------------------------------
+// 4. CONFIGURACIÓN DE PANTALLA (Outputs)
+// -----------------------------------------------------------------------------
+output "eDP-1" {
+    // Escala para monitores HiDPI (1.0 = 100%, 1.25, 1.5, 2.0, etc.)
+    scale 1.0
+    // resolution 1920 1080
+    // position 0 0
+}
+
+
+// -----------------------------------------------------------------------------
+// 5. APARIENCIA, ESPACIADO Y DISEÑO (Layout)
+// -----------------------------------------------------------------------------
+layout {
+    // Espacio entre ventanas y con los bordes de pantalla
+    gaps 8
+
+    // Comportamiento del scroll horizontal para la columna enfocada
+    center-focused-column "never"
+
+    // Anchos de columna predefinidos accesibles mediante atajos
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+        proportion 1.0
+    }
+
+    // Ancho por defecto con el que se abren las nuevas ventanas
+    default-column-width { proportion 0.5; }
+
+    // Anillo de Enfoque Activo (Focus Ring) con gradiente moderno estilo Catppuccin
+    focus-ring {
+        width 3
+        active-gradient from="#cba6f7" to="#89b4fa" angle=45
+        inactive-color "#313244"
+    }
+
+    // Borde secundario (desactivado a favor del focus-ring para mayor claridad)
+    border {
+        off
+    }
+
+    // Márgenes reservados para barras externas (Noctalia se gestiona vía layer-shell)
+    struts {
+        left 0
+        right 0
+        top 0
+        bottom 0
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// 6. ANIMACIONES
+// -----------------------------------------------------------------------------
+animations {
+    workspace-switch {
+        spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
+    }
+
+    window-open {
+        duration-ms 180
+        curve "ease-out-expo"
+    }
+
+    window-close {
+        duration-ms 180
+        curve "ease-out-expo"
+    }
+
+    horizontal-view-movement {
+        spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
+    }
+
+    window-movement {
+        spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
+    }
+
+    window-resize {
+        spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// 7. REGLAS DE VENTANAS (Window Rules & Floating)
+// -----------------------------------------------------------------------------
+
+// Esquinas redondeadas y recorte para todas las ventanas (radio de 12px)
+window-rule {
+    geometry-corner-radius 12
+    clip-to-geometry true
+}
+
+// Ventanas flotantes comunes y diálogos de configuración/sistema
+window-rule {
+    match app-id=r#"^(pavucontrol|org\.pulseaudio\.pavucontrol|nm-connection-editor|blueman-manager)$"#
+    match app-id=r#"^(org\.gnome\.Calculator|org\.kde\.polkit-kde-authentication-agent-1|polkit-gnome-authentication-agent-1)$"#
+    match app-id=r#"^(xdg-desktop-portal-gtk|xdg-desktop-portal-gnome|xdg-desktop-portal-kde)$"#
+    open-floating true
+}
+
+// Ventanas emergentes de guardado/apertura de archivos o diálogos
+window-rule {
+    match title=r#"^(Abrir|Guardar|Open|Save|Confirmar|Confirmación|Properties|Configuración|Preferences)$"#
+    open-floating true
+}
+
+// Reglas para ventanas compartidas en transmisiones o capturas
+window-rule {
+    match is-window-cast-target=true
+    focus-ring {
+        active-color "#f38ba8"
+        inactive-color "#45475a"
+    }
+}
+
+
+// -----------------------------------------------------------------------------
+// 8. ATAJOS DE TECLADO (Keybindings)
+// -----------------------------------------------------------------------------
+binds {
+    // =========================================================================
+    // ⭐ SECCIÓN DE ATAJOS PERSONALIZADOS (Añade aquí tus propios atajos)
+    // =========================================================================
+    // 💡 GUÍA RÁPIDA:
+    // • Modificadores disponibles: Mod (Tecla Super/Windows), Ctrl, Alt, Shift
+    // • Para abrir una app:       Mod+Letra { spawn "nombre-app"; }
+    // • Para pasar argumentos:    Mod+Letra { spawn "app" "arg1" "arg2"; }
+    // • Para ejecutar un script:  Mod+Letra { spawn "bash" "/ruta/script.sh"; }
+    //
+    // EJEMPLOS LISTOS PARA DESCOMENTAR / COPIAR:
+    // Mod+C       { spawn "code"; }             // Abrir VS Code
+    // Mod+M       { spawn "spotify"; }          // Abrir Spotify
+    // Mod+T       { spawn "telegram-desktop"; } // Abrir Telegram
+    // Mod+Shift+N { spawn "obsidian"; }         // Abrir Obsidian
+    // =========================================================================
+
+    // -------------------------------------------------------------------------
+    // Atajos de Sistema y Ayuda
+    // -------------------------------------------------------------------------
+    Mod+Shift+H { spawn "help-menu"; }       // Menú interactivo de ayuda y lanzador en Rofi (Help)
+    Mod+Shift+Slash { spawn "help-menu"; }   // Alias alternativo (Mod + ?)
+    Mod+Shift+E { quit; }
+    Mod+Shift+Q { close-window; }
+    Mod+Q { close-window; }
+
+    // Bloqueo de pantalla manual
+    Mod+L { spawn "hyprlock"; } // Bloquear pantalla
+
+    // Panel de Configuración y Ajustes de Noctalia Shell
+    Mod+A { spawn "noctalia" "msg" "settings-open"; } // Ajustes de barra y sistema (Noctalia)
+
+    // -------------------------------------------------------------------------
+    // Lanzadores de Aplicaciones y Herramientas Predeterminadas
+    // -------------------------------------------------------------------------
+    Mod+Return { spawn "kitty"; } // Terminal (Kitty)
+
+    // Menú de aplicaciones (Rofi)
+    Mod+D     { spawn "rofi" "-show" "drun"; } // Lanzador de aplicaciones
+    Mod+Space { spawn "rofi" "-show" "drun"; } // Lanzador de aplicaciones
+
+    // Navegador Web (Zen Browser)
+    Mod+B { spawn "zen-browser"; } // Navegador Web (Zen Browser)
+
+    // Gestor de Archivos
+    Mod+E { spawn "thunar"; } // Gestor de archivos (Thunar)
+
+    // Fondos de Pantalla
+    Mod+W       { spawn "set-wallpaper" "select-all"; }     // Fondo de pantalla (Escritorio + Pantalla de inicio)
+    Mod+Ctrl+W  { spawn "set-wallpaper" "select-inside"; }  // Fondo de pantalla (Solo escritorio)
+    Mod+Alt+W   { spawn "set-wallpaper" "select-outside"; } // Fondo de pantalla (Solo pantalla de inicio SDDM)
+    Mod+Shift+W { spawn "set-wallpaper" "select-outside"; } // Fondo de pantalla (Solo pantalla de inicio SDDM)
+
+    // -------------------------------------------------------------------------
+    // Navegación de Columnas y Ventanas (Izquierda / Derecha / Arriba / Abajo)
+    // -------------------------------------------------------------------------
+    // Navegación con Teclas de Flechas
+    Mod+Left  { focus-column-left; }
+    Mod+Right { focus-column-right; }
+    Mod+Down  { focus-window-down; }
+    Mod+Up    { focus-window-up; }
+
+    // Navegación alternativa con teclas de dirección
+    Mod+H { focus-column-left; }
+    Mod+J { focus-window-down; }
+    Mod+K { focus-window-up; }
+
+    // Mover Ventanas / Columnas
+    Mod+Shift+Left  { move-column-left; }
+    Mod+Shift+Right { move-column-right; }
+    Mod+Shift+Down  { move-window-down; }
+    Mod+Shift+Up    { move-window-up; }
+
+    // -------------------------------------------------------------------------
+    // Navegación entre Espacios de Trabajo (Workspaces Arriba / Abajo)
+    // -------------------------------------------------------------------------
+    Mod+Page_Down      { focus-workspace-down; }
+    Mod+Page_Up        { focus-workspace-up; }
+    Mod+Ctrl+Down      { focus-workspace-down; }
+    Mod+Ctrl+Up        { focus-workspace-up; }
+    Mod+Ctrl+J         { focus-workspace-down; }
+    Mod+Ctrl+K         { focus-workspace-up; }
+
+    Mod+Shift+Page_Down { move-column-to-workspace-down; }
+    Mod+Shift+Page_Up   { move-column-to-workspace-up; }
+    Mod+Ctrl+Shift+Down { move-column-to-workspace-down; }
+    Mod+Ctrl+Shift+Up   { move-column-to-workspace-up; }
+
+    // Acceso directo numérico a Workspaces (1 - 9)
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+    Mod+0 { focus-workspace 10; }
+
+    Mod+Shift+1 { move-column-to-workspace 1; }
+    Mod+Shift+2 { move-column-to-workspace 2; }
+    Mod+Shift+3 { move-column-to-workspace 3; }
+    Mod+Shift+4 { move-column-to-workspace 4; }
+    Mod+Shift+5 { move-column-to-workspace 5; }
+    Mod+Shift+6 { move-column-to-workspace 6; }
+    Mod+Shift+7 { move-column-to-workspace 7; }
+    Mod+Shift+8 { move-column-to-workspace 8; }
+    Mod+Shift+9 { move-column-to-workspace 9; }
+
+    // -------------------------------------------------------------------------
+    // Redimensionamiento y Control de Ventanas
+    // -------------------------------------------------------------------------
+    // Cambiar al siguiente tamaño predefinido
+    Mod+R { switch-preset-column-width; }
+    Mod+Shift+R { reset-window-height; }
+
+    // Ajuste fino de ancho y alto
+    Mod+Minus { set-column-width "-10%"; }
+    Mod+Equal { set-column-width "+10%"; }
+    Mod+Shift+Minus { set-window-height "-10%"; }
+    Mod+Shift+Equal { set-window-height "+10%"; }
+
+    // Maximizar (pantalla completa respetando la barra superior) y Pantalla completa total
+    Mod+F { maximize-column; }
+    Mod+Shift+F { fullscreen-window; }
+    Mod+M { maximize-column; }
+    Mod+C { center-column; }
+
+    // Alternar modo flotante para una ventana individual
+    Mod+V { toggle-window-floating; }
+    Mod+Shift+V { switch-focus-between-floating-and-tiling; }
+
+    // -------------------------------------------------------------------------
+    // Controles Multimedia y Volumen (WirePlumber / wpctl)
+    // -------------------------------------------------------------------------
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%+"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-"; }
+    XF86AudioMute        allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
+
+    // Controles de reproducción (playerctl)
+    XF86AudioPlay        allow-when-locked=true { spawn "playerctl" "play-pause"; }
+    XF86AudioNext        allow-when-locked=true { spawn "playerctl" "next"; }
+    XF86AudioPrev        allow-when-locked=true { spawn "playerctl" "previous"; }
+
+    // -------------------------------------------------------------------------
+    // Control de Brillo (brightnessctl)
+    // -------------------------------------------------------------------------
+    XF86MonBrightnessUp   allow-when-locked=true { spawn "brightnessctl" "set" "+5%"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "set" "5%-"; }
+
+    // -------------------------------------------------------------------------
+    // Capturas de Pantalla (Screenshot)
+    // -------------------------------------------------------------------------
+    Print { screenshot; }
+    Ctrl+Print { screenshot-screen; }
+    Alt+Print { screenshot-window; }
+}

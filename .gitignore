@@ -1,0 +1,20 @@
+# =============================================================================
+#   GITIGNORE — MYDOTFILES
+# =============================================================================
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos temporales y de respaldo
+*.bak
+*.old
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Archivos de entorno y logs
+*.log
+.cache/

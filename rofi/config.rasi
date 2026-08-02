@@ -1,0 +1,95 @@
+/* =============================================================================
+ *   ROFI - MINIMALIST LAUNCHER (Auto-adapta a Noctalia Shell)
+ *   Integración dinámica de colores con Noctalia Shell & Material You
+ * ============================================================================= */
+
+/* Importa la paleta de colores dinámica generada en tiempo real por Noctalia */
+@import "noctalia.rasi"
+
+configuration {
+    modi:                   "drun,run";
+    show-icons:             true;
+    display-drun:           "";
+    drun-display-format:    "{name}";
+    font:                   "JetBrains Mono Nerd Font 10.5";
+    icon-theme:             "Papirus-Dark";
+}
+
+/* Propiedades globales */
+* {
+    background-color: transparent;
+    text-color:       @fg;
+    margin:           0;
+    padding:          0;
+}
+
+/* Ventana principal centrada y compacta */
+window {
+    width:            480px;
+    background-color: @bg;
+    border:           1px;
+    border-color:     @border;
+    border-radius:    10px;
+    padding:          14px;
+    location:         center;
+    anchor:           center;
+}
+
+mainbox {
+    children:         [ "inputbar", "listview" ];
+    spacing:          10px;
+}
+
+/* Barra de búsqueda simple y limpia */
+inputbar {
+    children:         [ "prompt", "entry" ];
+    background-color: @bg;
+    border:           0 0 1px 0;
+    border-color:     @border;
+    padding:          0 0 10px 0;
+    spacing:          10px;
+}
+
+prompt {
+    text-color:       @accent;
+    font:             "JetBrains Mono Nerd Font 11";
+}
+
+entry {
+    text-color:       @fg;
+    placeholder:      "Buscar...";
+    placeholder-color:@border;
+}
+
+/* Lista de resultados */
+listview {
+    lines:            6;
+    columns:          1;
+    spacing:          3px;
+    cycle:            true;
+    dynamic:          true;
+    scrollbar:        false;
+}
+
+/* Elementos de la lista */
+element {
+    padding:          8px 10px;
+    border-radius:    6px;
+    spacing:          10px;
+    text-color:       @fg;
+}
+
+element-icon {
+    size:             22px;
+}
+
+element-text {
+    text-color:       inherit;
+    vertical-align:   0.5;
+}
+
+/* Elemento seleccionado usando los colores activos de Noctalia */
+element selected {
+    background-color: @bg-alt;
+    text-color:       @accent;
+}

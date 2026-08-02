@@ -1,0 +1,69 @@
+# =============================================================================
+#   NOCTALIA SHELL - CONFIGURACIÓN DE LA BARRA SUPERIOR
+#   Solución a solapamiento, separación de módulos, espaciado y truncado
+# =============================================================================
+
+[bar.default]
+enabled = true
+position = "top"
+layer = "top"
+thickness = 34
+padding = 12
+widget_spacing = 10 # Espaciado suficiente (10px) entre módulos para evitar solapamientos
+margin_edge = 0
+margin_opposite_edge = 0
+margin_ends = 0
+radius = 12
+background_opacity = 1.0
+
+# -----------------------------------------------------------------------------
+# ESTRUCTURA Y DISTRIBUCIÓN DE MÓDULOS
+# -----------------------------------------------------------------------------
+# Izquierda: Lanzador Rofi, Reloj e indicadores de Workspaces
+start = [
+    "Rofi",
+    "clock",
+    "workspaces"
+]
+
+# Centro: Reproductor multimedia aislado en el centro
+center = [
+    "media"
+]
+
+# Derecha: Bandeja del sistema y estado (sin duplicados)
+end = [
+    "tray",
+    "network",
+    "bluetooth",
+    "volume",
+    "brightness",
+    "battery",
+    "notifications",
+    "session"
+]
+
+# -----------------------------------------------------------------------------
+# CONFIGURACIÓN DE WIDGETS
+# -----------------------------------------------------------------------------
+
+# Widget: Reproductor Multimedia (Truncado y límites de tamaño)
+[widget.media]
+type = "media"
+max_length = 160.0      # Límite máximo de ancho para no empujar otros elementos
+min_length = 60.0
+art_size = 16.0
+title_scroll = "none"
+
+# Widget: Reloj
+[widget.clock]
+type = "clock"
+scale = 1.0
+
+# Widget: Botón de Rofi
+[widget.Rofi]
+type = "custom_button"
+glyph = "apps-filled"
+
+    [widget.Rofi.actions]
+    left = "exec rofi -show drun"
