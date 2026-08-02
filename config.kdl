@@ -49,8 +49,9 @@ screenshot-path "~/Imágenes/Capturas/screenshot-%Y-%m-%d-%H-%M-%S.png"
 input {
     keyboard {
         xkb {
-            // Distribución latinoamericana y española con alternancia Alt+Shift
+            // Distribución latinoamericana y española sin teclas muertas (nodeadkeys)
             layout "latam,es"
+            variant "nodeadkeys,nodeadkeys"
             options "grp:alt_shift_toggle"
         }
         // Repetición rápida y responsiva para escribir/navegar con fluidez
