@@ -79,7 +79,7 @@ PACMAN_PKGS=(
     swayidle
     rofi-wayland
     kitty
-    thunar
+    dolphin
     firefox
     pipewire
     wireplumber

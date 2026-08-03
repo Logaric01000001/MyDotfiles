@@ -281,7 +281,7 @@ binds {
     Mod+B { spawn "zen-browser"; } // Navegador Web (Zen Browser)
 
     // Gestor de Archivos
-    Mod+E { spawn "thunar"; } // Gestor de archivos (Thunar)
+    Mod+E { spawn "dolphin"; } // Gestor de archivos (Dolphin)
 
     // Fondos de Pantalla
     Mod+W       { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH set-wallpaper select-all"; }     // Fondo de pantalla (Escritorio + SDDM)

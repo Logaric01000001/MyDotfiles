@@ -27,7 +27,7 @@ Configuración completa, estética y ultra rápida para el compositor scrollable
 | <kbd>Mod</kbd> + <kbd>S</kbd> | **Menú de Energía** (Apagar, Reiniciar, Bloquear, Suspender, Logout) |
 | <kbd>Mod</kbd> + <kbd>D</kbd> o <kbd>Mod</kbd> + <kbd>Espacio</kbd> | Lanzador de Aplicaciones (Rofi) |
 | <kbd>Mod</kbd> + <kbd>B</kbd> | **Navegador Web** (Zen Browser) |
-| <kbd>Mod</kbd> + <kbd>E</kbd> | Gestor de Archivos (Thunar) |
+| <kbd>Mod</kbd> + <kbd>E</kbd> | Gestor de Archivos (Dolphin) |
 | <kbd>Mod</kbd> + <kbd>W</kbd> | **Cambiar TODO** (Fondo Escritorio + Pantalla de Inicio) |
 | <kbd>Mod</kbd> + <kbd>Ctrl</kbd> + <kbd>W</kbd> | **Cambiar SOLO Adentro** (Fondo del Escritorio) |
 | <kbd>Mod</kbd> + <kbd>Alt</kbd> + <kbd>W</kbd> | **Cambiar SOLO Afuera** (Fondo de Pantalla de Inicio SDDM) |
