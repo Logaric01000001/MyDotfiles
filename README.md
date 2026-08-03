@@ -31,6 +31,7 @@ Configuración completa, estética y ultra rápida para el compositor scrollable
 | <kbd>Mod</kbd> + <kbd>W</kbd> | **Cambiar TODO** (Fondo Escritorio + Pantalla de Inicio) |
 | <kbd>Mod</kbd> + <kbd>Ctrl</kbd> + <kbd>W</kbd> | **Cambiar SOLO Adentro** (Fondo del Escritorio) |
 | <kbd>Mod</kbd> + <kbd>Alt</kbd> + <kbd>W</kbd> | **Cambiar SOLO Afuera** (Fondo de Pantalla de Inicio SDDM) |
+| <kbd>Mod</kbd> + <kbd>P</kbd> | **Menú de Pantallas** (Extendido, Duplicado, Solo Laptop, Solo HDMI) |
 | <kbd>Mod</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd> | **Mostrar Guía de Atajos en Pantalla** (*Help Overlay*) |
 | <kbd>Mod</kbd> + <kbd>A</kbd> | **Panel de Ajustes de Noctalia** (`settings-open`) |
 

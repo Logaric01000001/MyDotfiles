@@ -229,6 +229,12 @@ if [ -f "$DOTFILES_DIR/scripts/power-menu.sh" ]; then
     echo -e "   ${GREEN}✔ Menú de potencia instalado:${NC} ~/.local/bin/power-menu.sh"
 fi
 
+if [ -f "$DOTFILES_DIR/scripts/display-mode.sh" ]; then
+    cp -f "$DOTFILES_DIR/scripts/display-mode.sh" "$HOME/.local/bin/display-mode.sh"
+    chmod +x "$HOME/.local/bin/display-mode.sh"
+    echo -e "   ${GREEN}✔ Menú de modo de pantalla instalado:${NC} ~/.local/bin/display-mode.sh"
+fi
+
 if [ -f "$DOTFILES_DIR/scripts/fix-noctalia-resume.sh" ]; then
     cp -f "$DOTFILES_DIR/scripts/fix-noctalia-resume.sh" "$HOME/.local/bin/fix-noctalia-resume.sh"
     chmod +x "$HOME/.local/bin/fix-noctalia-resume.sh"
