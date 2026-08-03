@@ -84,13 +84,25 @@ input {
 
 
 // -----------------------------------------------------------------------------
-// 4. CONFIGURACIÓN DE PANTALLA (Outputs)
+// 4. CONFIGURACIÓN DE PANTALLAS (Outputs - Laptop & Monitor Externo HDMI)
 // -----------------------------------------------------------------------------
+
+// Pantalla principal de la laptop
 output "eDP-1" {
-    // Escala para monitores HiDPI (1.0 = 100%, 1.25, 1.5, 2.0, etc.)
     scale 1.0
-    // resolution 1920 1080
-    // position 0 0
+    position x=0 y=0
+}
+
+// Monitor externo HDMI-A-1 (Configuración extendida a la derecha de la laptop)
+output "HDMI-A-1" {
+    scale 1.0
+    position x=1366 y=0
+}
+
+// Monitor externo HDMI secundario / Adaptador DisplayPort / USB-C
+output "HDMI-A-2" {
+    scale 1.0
+    position x=1366 y=0
 }
 
 

@@ -5,6 +5,7 @@
 
 [bar.default]
 enabled = true
+monitors = ["all"]
 position = "top"
 layer = "top"
 thickness = 34
