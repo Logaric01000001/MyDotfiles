@@ -93,8 +93,9 @@ output "eDP-1" {
     position x=0 y=0
 }
 
-// Monitor externo HDMI-A-1 (Configuración extendida a la derecha de la laptop)
+// Monitor externo HDMI-A-1 (Configuración extendida a 1080p @ 60Hz a la derecha de la laptop)
 output "HDMI-A-1" {
+    mode "1920x1080@60.000"
     scale 1.0
     position x=1366 y=0
 }
