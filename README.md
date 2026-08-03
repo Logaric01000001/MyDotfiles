@@ -45,12 +45,13 @@ Configuración completa, estética y ultra rápida para el compositor scrollable
 | <kbd>Mod</kbd> + <kbd>R</kbd> | Alternar anchos de columna predefinidos (33%, 50%, 66%, 100%) |
 | <kbd>Mod</kbd> + <kbd>-</kbd> / <kbd>+</kbd> | Reducir / Aumentar ancho de columna (-10% / +10%) |
 
-### 🧭 Navegación y Workspaces
+### 🧭 Navegación, Workspaces y Multi-Monitor (HDMI / DP)
 | Atajo | Acción |
 | :--- | :--- |
 | <kbd>Mod</kbd> + <kbd>←</kbd> / <kbd>→</kbd> | Mover foco entre columnas (Izquierda / Derecha) |
 | <kbd>Mod</kbd> + <kbd>↑</kbd> / <kbd>↓</kbd> | Mover foco dentro de la columna (Arriba / Abajo) |
-| <kbd>Mod</kbd> + <kbd>H</kbd> / <kbd>J</kbd> / <kbd>K</kbd> | Navegación direccional alternativa |
+| <kbd>Mod</kbd> + <kbd>Alt</kbd> + <kbd>←</kbd> / <kbd>→</kbd> | **Mover ventana/columna actual a la otra pantalla** (Laptop ↔ HDMI) |
+| <kbd>Mod</kbd> + <kbd>Shift</kbd> + <kbd>Ctrl</kbd> + <kbd>←</kbd> / <kbd>→</kbd> | **Cambiar foco entre monitores** (Laptop ↔ HDMI) |
 | <kbd>Mod</kbd> + <kbd>1</kbd> - <kbd>9</kbd> | Cambiar al espacio de trabajo (Workspace) 1 - 9 |
 | <kbd>Mod</kbd> + <kbd>Shift</kbd> + <kbd>1</kbd> - <kbd>9</kbd> | Mover columna actual al espacio de trabajo 1 - 9 |
 | <kbd>Mod</kbd> + <kbd>Ctrl</kbd> + <kbd>↑</kbd> / <kbd>↓</kbd> | Subir / Bajar de espacio de trabajo |

@@ -84,7 +84,7 @@ input {
 
 
 // -----------------------------------------------------------------------------
-// 4. CONFIGURACIÓN DE PANTALLAS (Outputs - Laptop & Monitor Externo HDMI)
+// 4. CONFIGURACIÓN DE PANTALLAS (Outputs - Laptop & Monitor Externo HDMI / DP)
 // -----------------------------------------------------------------------------
 
 // Pantalla principal de la laptop
@@ -99,8 +99,20 @@ output "HDMI-A-1" {
     position x=1366 y=0
 }
 
-// Monitor externo HDMI secundario / Adaptador DisplayPort / USB-C
+// Monitor externo HDMI-A-2 (Secundario / Adaptador USB-C HDMI)
 output "HDMI-A-2" {
+    scale 1.0
+    position x=1366 y=0
+}
+
+// Monitor externo DisplayPort 1 (DP-1 / Docking Station)
+output "DP-1" {
+    scale 1.0
+    position x=1366 y=0
+}
+
+// Monitor externo DisplayPort 2 (DP-2)
+output "DP-2" {
     scale 1.0
     position x=1366 y=0
 }
@@ -294,6 +306,17 @@ binds {
     Mod+Shift+Right { move-column-right; }
     Mod+Shift+Down  { move-window-down; }
     Mod+Shift+Up    { move-window-up; }
+
+    // -------------------------------------------------------------------------
+    // Control Directo Multi-Monitor (Laptop <-> Monitor HDMI / DP)
+    // -------------------------------------------------------------------------
+    // Cambiar foco de pantalla (Laptop <-> HDMI)
+    Mod+Shift+Ctrl+Left  { focus-monitor-left; }
+    Mod+Shift+Ctrl+Right { focus-monitor-right; }
+
+    // Mover la ventana/columna actual al monitor de al lado (HDMI)
+    Mod+Alt+Left  { move-column-to-monitor-left; }
+    Mod+Alt+Right { move-column-to-monitor-right; }
 
     // -------------------------------------------------------------------------
     // Navegación entre Espacios de Trabajo (Workspaces Arriba / Abajo)
