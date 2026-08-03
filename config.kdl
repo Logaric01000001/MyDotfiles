@@ -49,9 +49,8 @@ screenshot-path "~/Imágenes/Capturas/screenshot-%Y-%m-%d-%H-%M-%S.png"
 input {
     keyboard {
         xkb {
-            // Distribución Español (España) y Latinoamericano con teclas muertas estándar
-            layout "es,latam"
-            options "grp:alt_shift_toggle"
+            // Distribución Latinoamericana (Alt Gr + + = ~ virgulilla)
+            layout "latam"
         }
         // Repetición rápida y responsiva para escribir/navegar con fluidez
         repeat-delay 300
