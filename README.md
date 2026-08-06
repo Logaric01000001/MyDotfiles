@@ -2,12 +2,6 @@
 
 Un entorno de trabajo moderno, ultrarrápido y visualmente impresionante para **Arch Linux** y derivados, basado en el compositor **Niri (Wayland)**, la suite visual **Catppuccin Mocha**, la shell de escritorio **Noctalia**, la terminal **Kitty / Alacritty**, la shell **Zsh**, **Fastfetch**, **VSCodium** y la suite de utilidades personalizadas.
 
-> [!IMPORTANT]
-> **Privacidad Garantizada:** Este repositorio ha sido filtrado e inspeccionado minuciosamente. No contiene ningún secreto, clave privada (SSH/GPG), token de autenticación ni historial de comandos.
-
-> [!TIP]
-> **Navegador de Archivos Opaco:** Dolphin y las ventanas Qt/GTK están configurados con fondo 100% sólido y opaco (`KvArcDark`) sin transparencias molestas, garantizando que los nombres de archivos y textos sean nítidos y fáciles de leer sobre cualquier fondo de pantalla.
-
 ---
 
 ## 🚀 Instalación Rápida (Un Solo Comando)
