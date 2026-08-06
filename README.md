@@ -2,9 +2,6 @@
 
 Un entorno de trabajo moderno, ultrarrápido y visualmente impresionante para **Arch Linux** y derivados, basado en el compositor **Niri (Wayland)**, la suite visual **Catppuccin Mocha**, la shell de escritorio **Noctalia**, la terminal **Kitty**, el navegador de archivos **Dolphin**, la shell **Zsh**, **Fastfetch**, **VSCodium** y la suite de utilidades personalizadas.
 
-> [!IMPORTANT]
-> **Privacidad Garantizada:** Este repositorio ha sido filtrado e inspeccionado minuciosamente. No contiene ningún secreto, clave privada (SSH/GPG), token de autenticación ni historial de comandos.
-
 > [!TIP]
 > **Navegador de Archivos Opaco:** Dolphin está configurado con fondo 100% sólido y opaco (`KvArcDark`) sin transparencias molestas, garantizando que los nombres de archivos y textos sean nítidos y fáciles de leer sobre cualquier fondo de pantalla.
 ---
@@ -89,10 +86,3 @@ Los atajos de teclado usan la tecla **`Mod`** (Tecla Windows / Super):
 - **Capturas de Pantalla:** `grim`, `slurp`
 - **Bloqueo de Pantalla:** `hyprlock`, `swaylock`
 
----
-
-## 🔒 Garantía de Seguridad y Privacidad
-
-Para garantizar que tus datos privados nunca se compartan al subir este repositorio a GitHub u otros servicios:
-- El archivo `.gitignore` ignora automáticamente `.zsh_history`, `*.key`, `id_rsa`, `*.pem` y cualquier archivo de credenciales.
-- Los scripts han sido sanitizados para no contener rutas absolutas fijas ni contraseñas.

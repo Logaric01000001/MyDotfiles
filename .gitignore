@@ -1,8 +1,8 @@
 # =============================================================================
-#   🔒 GITIGNORE — SEGURIDAD & PRIVACIDAD ESTRICTA PARA DOTFILES
+#   GITIGNORE
 # =============================================================================
 
-# --- HISTORIALES Y SESIONES PRIVADAS ---
+# --- HISTORIALES Y SESIONES ---
 .zsh_history
 *.history
 .bash_history
@@ -13,7 +13,7 @@
 .gdb_history
 *.log
 
-# --- CLAVES PRIVADAS, CREDENCIALES Y TOKENS ---
+# --- CREDENCIALES ---
 *.pem
 *.key
 *.pub
@@ -30,14 +30,14 @@ secrets.*
 *credentials*
 *.secret
 
-# --- ARCHIVOS TEMPORALES Y RESPALDOS DE DOTFILES ---
+# --- ARCHIVOS TEMPORALES Y RESPALDOS ---
 dotfiles_backup_*
 *.bak
 *.tmp
 *.swp
 *~
 
-# --- CACHES Y BINARIOS DEL SISTEMA ---
+# --- CACHES Y BINARIOS ---
 __pycache__/
 *.pyc
 *.pyo
