@@ -204,9 +204,9 @@ window-rule {
     clip-to-geometry true
 }
 
-// Regla para navegadores de archivos: Fondo 100% sólido y opaco (sin transparencias)
+// Regla para navegador de archivos Dolphin: Fondo 100% sólido y opaco (sin transparencia)
 window-rule {
-    match app-id=r#"^(dolphin|org\.kde\.dolphin|thunar|nemo|nautilus)$"#
+    match app-id=r#"^(dolphin|org\.kde\.dolphin)$"#
     opacity 1.0
 }
 
