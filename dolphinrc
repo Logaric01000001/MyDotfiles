@@ -1,0 +1,15 @@
+[Icons]
+Theme=TokyoNight
+
+[General]
+Version=202
+
+[MainWindow]
+MenuBar=Disabled
+
+[MainWindow][Toolbar mainToolBar]
+IconSize=32
+ToolButtonStyle=IconOnly
+
+[UiSettings]
+ColorScheme=KvArcDark

@@ -75,12 +75,22 @@ PACMAN_PKGS=(
     git
     niri
     hyprlock
+    swaylock
     swaybg
     swayidle
     rofi-wayland
     kitty
+    alacritty
     dolphin
-    firefox
+    fastfetch
+    zsh
+    starship
+    eza
+    zoxide
+    fuzzel
+    cliphist
+    kvantum
+    kvantum-qt5
     pipewire
     wireplumber
     brightnessctl
@@ -94,14 +104,15 @@ PACMAN_PKGS=(
     wl-clipboard
     grim
     slurp
-    fastfetch
 )
 
 echo -e "${MAGENTA}${BOLD}📦 [1/4] Comprobando e instalando paquetes oficiales...${NC}"
-if command -v sudo &>/dev/null; then
-    sudo pacman -S --needed --noconfirm "${PACMAN_PKGS[@]}"
-else
-    su -c "pacman -S --needed --noconfirm ${PACMAN_PKGS[*]}"
+if command -v pacman &>/dev/null; then
+    if command -v sudo &>/dev/null; then
+        sudo pacman -S --needed --noconfirm "${PACMAN_PKGS[@]}" 2>/dev/null || true
+    else
+        su -c "pacman -S --needed --noconfirm ${PACMAN_PKGS[*]}" 2>/dev/null || true
+    fi
 fi
 
 # Verificación / Instalación de AUR Helper
@@ -112,30 +123,33 @@ if command -v yay &>/dev/null; then
     AUR_HELPER="yay"
 elif command -v paru &>/dev/null; then
     AUR_HELPER="paru"
-else
+elif command -v pacman &>/dev/null; then
     echo -e "${YELLOW}⚡ Instalando 'yay' automáticamente para paquetes de AUR...${NC}"
     TMP_DIR=$(mktemp -d)
-    git clone https://aur.archlinux.org/yay-bin.git "$TMP_DIR/yay-bin"
-    (cd "$TMP_DIR/yay-bin" && makepkg -si --noconfirm)
+    git clone https://aur.archlinux.org/yay-bin.git "$TMP_DIR/yay-bin" 2>/dev/null || true
+    (cd "$TMP_DIR/yay-bin" && makepkg -si --noconfirm 2>/dev/null) || true
     rm -rf "$TMP_DIR"
     AUR_HELPER="yay"
 fi
-echo -e "   ${GREEN}✔ Gestor AUR:${NC} $AUR_HELPER"
 
-# Instalar Noctalia Shell y Zen Browser desde AUR
-if ! command -v noctalia &>/dev/null; then
-    echo -e "${BLUE}📦 Instalando Noctalia Shell desde AUR...${NC}"
-    $AUR_HELPER -S --needed --noconfirm noctalia-bin || $AUR_HELPER -S --needed --noconfirm noctalia || true
-fi
+if [ -n "$AUR_HELPER" ]; then
+    echo -e "   ${GREEN}✔ Gestor AUR:${NC} $AUR_HELPER"
+    
+    # Instalar Noctalia Shell, Zen Browser y VScodium desde AUR
+    if ! command -v noctalia &>/dev/null; then
+        echo -e "${BLUE}📦 Instalando Noctalia Shell desde AUR...${NC}"
+        $AUR_HELPER -S --needed --noconfirm noctalia-bin || $AUR_HELPER -S --needed --noconfirm noctalia || true
+    fi
 
-if ! command -v zen-browser &>/dev/null; then
-    echo -e "${BLUE}📦 Instalando Zen Browser desde AUR...${NC}"
-    $AUR_HELPER -S --needed --noconfirm zen-browser-bin || true
-fi
+    if ! command -v zen-browser &>/dev/null; then
+        echo -e "${BLUE}📦 Instalando Zen Browser desde AUR...${NC}"
+        $AUR_HELPER -S --needed --noconfirm zen-browser-bin || true
+    fi
 
-if ! command -v codium &>/dev/null && ! command -v vscodium &>/dev/null; then
-    echo -e "${BLUE}📦 Instalando VScodium desde AUR...${NC}"
-    $AUR_HELPER -S --needed --noconfirm vscodium-bin || true
+    if ! command -v codium &>/dev/null && ! command -v vscodium &>/dev/null; then
+        echo -e "${BLUE}📦 Instalando VScodium desde AUR...${NC}"
+        $AUR_HELPER -S --needed --noconfirm vscodium-bin || true
+    fi
 fi
 
 # -----------------------------------------------------------------------------
@@ -154,7 +168,12 @@ mkdir -p "$HOME/.config/swaylock"
 mkdir -p "$HOME/.config/rofi"
 mkdir -p "$HOME/.config/noctalia"
 mkdir -p "$HOME/.config/kitty"
+mkdir -p "$HOME/.config/alacritty"
 mkdir -p "$HOME/.config/fastfetch"
+mkdir -p "$HOME/.config/Kvantum"
+mkdir -p "$HOME/.config/VSCodium/User"
+mkdir -p "$HOME/.zsh"
+mkdir -p "$HOME/.local/bin"
 mkdir -p "$HOME/Imágenes/Capturas"
 mkdir -p "$HOME/Imágenes/Fondos"
 mkdir -p "$HOME/Descargas"
@@ -168,15 +187,16 @@ echo -e "${MAGENTA}${BOLD}📋 [4/4] Instalando archivos de configuración (Copi
 safe_install_file() {
     local src="$1"
     local dest="$2"
-    local rel_dest="${dest#$HOME/.config/}"
+    local rel_dest="${dest#$HOME/}"
 
-    # Si el destino ya existe
+    if [ ! -e "$src" ]; then
+        return 0
+    fi
+
     if [ -e "$dest" ] || [ -L "$dest" ]; then
-        # Si es un enlace simbólico, simplemente lo eliminamos para colocar el archivo real
         if [ -L "$dest" ]; then
             rm -f "$dest"
         else
-            # Si es un archivo físico existente con contenido diferente, creamos respaldo
             if ! cmp -s "$src" "$dest"; then
                 mkdir -p "$BACKUP_DIR/$(dirname "$rel_dest")"
                 cp -a "$dest" "$BACKUP_DIR/$rel_dest"
@@ -188,85 +208,111 @@ safe_install_file() {
     fi
 
     mkdir -p "$(dirname "$dest")"
-    cp -f "$src" "$dest"
+    cp -Rf "$src" "$dest"
     echo -e "   ${GREEN}✔ Instalado:${NC} $dest"
 }
 
-# Instalación de cada configuración
+# Configuración Niri
 safe_install_file "$DOTFILES_DIR/config.kdl" "$HOME/.config/niri/config.kdl"
+
+# Bloqueadores de pantalla
 safe_install_file "$DOTFILES_DIR/hyprlock.conf" "$HOME/.config/hypr/hyprlock.conf"
 safe_install_file "$DOTFILES_DIR/swaylock.conf" "$HOME/.config/swaylock/config"
-safe_install_file "$DOTFILES_DIR/rofi/config.rasi" "$HOME/.config/rofi/config.rasi"
-safe_install_file "$DOTFILES_DIR/noctalia/config.toml" "$HOME/.config/noctalia/config.toml"
-safe_install_file "$DOTFILES_DIR/kitty/kitty.conf" "$HOME/.config/kitty/kitty.conf"
+
+# Rofi y Noctalia
+if [ -d "$DOTFILES_DIR/rofi" ]; then
+    for f in "$DOTFILES_DIR/rofi"/*; do
+        safe_install_file "$f" "$HOME/.config/rofi/$(basename "$f")"
+    done
+fi
+
+if [ -d "$DOTFILES_DIR/noctalia" ]; then
+    safe_install_file "$DOTFILES_DIR/noctalia/config.toml" "$HOME/.config/noctalia/config.toml"
+    if [ -d "$DOTFILES_DIR/noctalia/palettes" ]; then
+        mkdir -p "$HOME/.config/noctalia/palettes"
+        cp -rf "$DOTFILES_DIR/noctalia/palettes"/* "$HOME/.config/noctalia/palettes/" 2>/dev/null || true
+    fi
+fi
+
+# Terminales
+if [ -d "$DOTFILES_DIR/kitty" ]; then
+    safe_install_file "$DOTFILES_DIR/kitty/kitty.conf" "$HOME/.config/kitty/kitty.conf"
+    if [ -d "$DOTFILES_DIR/kitty/themes" ]; then
+        mkdir -p "$HOME/.config/kitty/themes"
+        cp -rf "$DOTFILES_DIR/kitty/themes"/* "$HOME/.config/kitty/themes/" 2>/dev/null || true
+    fi
+fi
+
+if [ -d "$DOTFILES_DIR/alacritty" ]; then
+    safe_install_file "$DOTFILES_DIR/alacritty/alacritty.toml" "$HOME/.config/alacritty/alacritty.toml"
+    if [ -d "$DOTFILES_DIR/alacritty/themes" ]; then
+        mkdir -p "$HOME/.config/alacritty/themes"
+        cp -rf "$DOTFILES_DIR/alacritty/themes"/* "$HOME/.config/alacritty/themes/" 2>/dev/null || true
+    fi
+fi
+
+# Fastfetch
 safe_install_file "$DOTFILES_DIR/fastfetch/config.jsonc" "$HOME/.config/fastfetch/config.jsonc"
 if [ -f "$DOTFILES_DIR/fastfetch/logo.txt" ]; then
     safe_install_file "$DOTFILES_DIR/fastfetch/logo.txt" "$HOME/.config/fastfetch/logo.txt"
 fi
 
-# Instalación de utilidades personalizadas (help-menu, set-wallpaper y lock-and-restore)
+# Navegador de archivos Dolphin (Fondo Sólido sin Transparencia)
+safe_install_file "$DOTFILES_DIR/Kvantum/kvantum.kvconfig" "$HOME/.config/Kvantum/kvantum.kvconfig"
+safe_install_file "$DOTFILES_DIR/dolphinrc" "$HOME/.config/dolphinrc"
+
+# VSCodium / VSCode
+safe_install_file "$DOTFILES_DIR/vscode/settings.json" "$HOME/.config/VSCodium/User/settings.json"
+
+# Shell Zsh
+if [ -d "$DOTFILES_DIR/zsh" ]; then
+    for zfile in "$DOTFILES_DIR/zsh"/*; do
+        bname=$(basename "$zfile")
+        if [ "$bname" != "starship" ]; then
+            safe_install_file "$zfile" "$HOME/.zsh/$bname"
+        fi
+    done
+    if [ -d "$DOTFILES_DIR/zsh/starship" ]; then
+        mkdir -p "$HOME/.zsh/starship"
+        cp -rf "$DOTFILES_DIR/zsh/starship"/* "$HOME/.zsh/starship/" 2>/dev/null || true
+    fi
+    # Crear enlace simbólico de .zshrc a ~/.zshrc
+    rm -f "$HOME/.zshrc"
+    ln -sf "$HOME/.zsh/.zshrc" "$HOME/.zshrc"
+    echo -e "   ${GREEN}✔ Enlace creado:${NC} ~/.zshrc → ~/.zsh/.zshrc"
+fi
+
+# Instalación de utilidades personalizadas en ~/.local/bin
 mkdir -p "$HOME/.local/bin"
-if [ -f "$DOTFILES_DIR/scripts/set-wallpaper.sh" ]; then
-    cp -f "$DOTFILES_DIR/scripts/set-wallpaper.sh" "$HOME/.local/bin/set-wallpaper"
-    chmod +x "$HOME/.local/bin/set-wallpaper"
-    echo -e "   ${GREEN}✔ Utilidad instalada:${NC} ~/.local/bin/set-wallpaper"
-fi
-
-if [ -f "$DOTFILES_DIR/scripts/help-menu.sh" ]; then
-    cp -f "$DOTFILES_DIR/scripts/help-menu.sh" "$HOME/.local/bin/help-menu"
-    chmod +x "$HOME/.local/bin/help-menu"
-    echo -e "   ${GREEN}✔ Guía interactiva instalada:${NC} ~/.local/bin/help-menu"
-fi
-
-if [ -f "$DOTFILES_DIR/scripts/lock-and-restore.sh" ]; then
-    cp -f "$DOTFILES_DIR/scripts/lock-and-restore.sh" "$HOME/.local/bin/lock-and-restore.sh"
-    chmod +x "$HOME/.local/bin/lock-and-restore.sh"
-    echo -e "   ${GREEN}✔ Script de bloqueo/restauración instalado:${NC} ~/.local/bin/lock-and-restore.sh"
-fi
-if [ -f "$DOTFILES_DIR/scripts/power-menu.sh" ]; then
-    cp -f "$DOTFILES_DIR/scripts/power-menu.sh" "$HOME/.local/bin/power-menu.sh"
-    chmod +x "$HOME/.local/bin/power-menu.sh"
-    echo -e "   ${GREEN}✔ Menú de potencia instalado:${NC} ~/.local/bin/power-menu.sh"
-fi
-
-if [ -f "$DOTFILES_DIR/scripts/display-mode.sh" ]; then
-    cp -f "$DOTFILES_DIR/scripts/display-mode.sh" "$HOME/.local/bin/display-mode.sh"
-    chmod +x "$HOME/.local/bin/display-mode.sh"
-    echo -e "   ${GREEN}✔ Menú de modo de pantalla instalado:${NC} ~/.local/bin/display-mode.sh"
-fi
-
-if [ -f "$DOTFILES_DIR/scripts/fix-noctalia-resume.sh" ]; then
-    cp -f "$DOTFILES_DIR/scripts/fix-noctalia-resume.sh" "$HOME/.local/bin/fix-noctalia-resume.sh"
-    chmod +x "$HOME/.local/bin/fix-noctalia-resume.sh"
-    echo -e "   ${GREEN}✔ Script de reanudación instalado:${NC} ~/.local/bin/fix-noctalia-resume.sh"
+if [ -d "$DOTFILES_DIR/scripts" ]; then
+    for script in "$DOTFILES_DIR/scripts"/*; do
+        sname=$(basename "$script")
+        cp -f "$script" "$HOME/.local/bin/$sname"
+        chmod +x "$HOME/.local/bin/$sname"
+        echo -e "   ${GREEN}✔ Script instalado:${NC} ~/.local/bin/$sname"
+    done
 fi
 
 # Servicio systemd para restaurar Noctalia tras suspender/hibernar
 if [ -f "$DOTFILES_DIR/systemd/noctalia-resume.service" ]; then
     echo -e "\n${BLUE}⚡ Configurando servicio de reanudación de Noctalia...${NC}"
-    sudo cp -f "$DOTFILES_DIR/systemd/noctalia-resume.service" "/etc/systemd/system/noctalia-resume@.service" 2>/dev/null && \
-    sudo systemctl daemon-reload 2>/dev/null && \
-    sudo systemctl enable "noctalia-resume@$(whoami).service" 2>/dev/null && \
-    echo -e "   ${GREEN}✔ Servicio noctalia-resume habilitado (Noctalia se restaura automáticamente al abrir la tapa).${NC}" || \
-    echo -e "   ${YELLOW}⚠️  No se pudo instalar el servicio systemd (requiere permisos de administrador).${NC}"
-fi
-
-# Configuración personalizada de pantalla de inicio SDDM
-if [ -d "/usr/share/sddm/themes/SilentSDDM" ] && [ -f "$DOTFILES_DIR/sddm/default-left.conf" ]; then
-    if [ -w "/usr/share/sddm/themes/SilentSDDM/configs" ]; then
-        cp -f "$DOTFILES_DIR/sddm/default-left.conf" "/usr/share/sddm/themes/SilentSDDM/configs/default-left.conf"
-        echo -e "   ${GREEN}✔ Pantalla de inicio SDDM configurada (Catppuccin Mocha).${NC}"
-    elif command -v sudo &>/dev/null; then
-        sudo cp -f "$DOTFILES_DIR/sddm/default-left.conf" "/usr/share/sddm/themes/SilentSDDM/configs/default-left.conf" 2>/dev/null || true
+    if command -v sudo &>/dev/null; then
+        sudo cp -f "$DOTFILES_DIR/systemd/noctalia-resume.service" "/etc/systemd/system/noctalia-resume@.service" 2>/dev/null && \
+        sudo systemctl daemon-reload 2>/dev/null && \
+        sudo systemctl enable "noctalia-resume@$(whoami).service" 2>/dev/null && \
+        echo -e "   ${GREEN}✔ Servicio noctalia-resume habilitado.${NC}" || true
     fi
 fi
 
-# Copiar fondos de ejemplo si la carpeta está vacía
-if [ -d "/usr/share/sddm/themes/SilentSDDM/backgrounds" ]; then
-    cp -n /usr/share/sddm/themes/SilentSDDM/backgrounds/* "$HOME/Imágenes/Fondos/" 2>/dev/null || true
+# Configuración personalizada de SDDM
+if [ -d "/usr/share/sddm/themes/SilentSDDM" ] && [ -f "$DOTFILES_DIR/sddm/default-left.conf" ]; then
+    if command -v sudo &>/dev/null; then
+        sudo cp -f "$DOTFILES_DIR/sddm/default-left.conf" "/usr/share/sddm/themes/SilentSDDM/configs/default-left.conf" 2>/dev/null || true
+        echo -e "   ${GREEN}✔ SDDM configurado (Catppuccin Mocha).${NC}"
+    fi
 fi
 
-# Asegurar ~/.local/bin en el PATH de la shell
+# Asegurar ~/.local/bin en el PATH
 for rfile in "$HOME/.zshrc" "$HOME/.bashrc"; do
     if [ -f "$rfile" ] && ! grep -q '\.local/bin' "$rfile"; then
         echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$rfile"
@@ -274,8 +320,14 @@ for rfile in "$HOME/.zshrc" "$HOME/.bashrc"; do
     fi
 done
 
+# Cambiar shell por defecto a Zsh si está instalado
+if command -v zsh &>/dev/null && [ "$SHELL" != "$(which zsh)" ]; then
+    echo -e "${BLUE}🐚 Estableciendo Zsh como shell por defecto...${NC}"
+    chsh -s "$(which zsh)" "$USER" 2>/dev/null || true
+fi
+
 # -----------------------------------------------------------------------------
-# 6. RECARGA EN VIVO (SI NIRI O NOCTALIA YA ESTÁN EN EJECUCIÓN)
+# 6. RECARGA EN VIVO (SI NIRI ESTÁ EN EJECUCIÓN)
 # -----------------------------------------------------------------------------
 if pgrep -x niri &>/dev/null; then
     echo ""
@@ -299,19 +351,17 @@ fi
 
 echo -e "${BOLD}Resumen de atajos configurados:${NC}"
 echo -e "  • ${CYAN}Mod + Shift + H${NC}    → Guía interactiva de atajos en pantalla (Help)"
-echo -e "  • ${CYAN}Mod + Enter${NC}        → Terminal (Kitty)"
+echo -e "  • ${CYAN}Mod + Enter${NC}        → Terminal (Kitty / Alacritty)"
+echo -e "  • ${CYAN}Mod + E${NC}            → Navegador de Archivos (Dolphin - Fondo Sólido Opaco)"
 echo -e "  • ${CYAN}Mod + C${NC}            → Editor de código (VScodium)"
 echo -e "  • ${CYAN}Mod + S${NC}            → Menú de Energía (Apagar, Reiniciar, Bloquear, Logout)"
 echo -e "  • ${CYAN}Mod + D / Espacio${NC}  → Lanzador de aplicaciones (Rofi minimalista)"
 echo -e "  • ${CYAN}Mod + B${NC}            → Navegador Web (Zen Browser)"
-echo -e "  • ${CYAN}Mod + W${NC}            → Cambiar fondo de TODO (Escritorio + Pantalla de inicio)"
-echo -e "  • ${CYAN}Mod + Ctrl + W${NC}     → Cambiar SOLO fondo de ADENTRO (Escritorio)"
-echo -e "  • ${CYAN}Mod + Alt + W${NC}      → Cambiar SOLO fondo de AFUERA (Pantalla de inicio SDDM)"
+echo -e "  • ${CYAN}Mod + W${NC}            → Cambiar fondo de pantalla"
 echo -e "  • ${CYAN}Mod + A${NC}            → Panel de Ajustes y Barra (Noctalia)"
 echo -e "  • ${CYAN}Mod + L${NC}            → Bloquear pantalla (Hyprlock + Auto-restaurar Noctalia)"
-echo -e "  • ${CYAN}Mod + F${NC}            → Maximizar columna (manteniendo barra)"
-echo -e "  • ${CYAN}Mod + Shift + F${NC}    → Pantalla completa total"
+echo -e "  • ${CYAN}Mod + F${NC}            → Maximizar ventana"
 echo -e "  • ${CYAN}Mod + Q${NC}            → Cerrar ventana activa"
 echo ""
-echo -e "${GREEN}✨ ¡Todo listo para disfrutar de tu entorno!${NC}"
+echo -e "${GREEN}✨ ¡Todo listo! Tu entorno dotfiles está 100% instalado, protegido y sin transparencias molestas.${NC}"
 echo ""

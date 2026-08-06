@@ -1,0 +1,145 @@
+# ~/.zsh/alias
+source ~/.zsh/functions.zsh
+
+## list ##
+alias ls='eza -T --level=1 --color=always --icons=always'
+alias la='eza -a --icons=always'
+alias ll='eza -l -a --icons=always --no-time'
+alias lst='eza -T --level=2 --color=always --icons=always'
+alias lsf='eza -f -a --color=always --icons=always'
+alias lstd='eza -D -T --level=2 --color=always --icons=always'
+alias tree='eza -T --level=3 --color=always --icons=always'
+
+# alias cat='bat ...' # Defined below
+
+alias grubup="sudo update-grub" # most other distros like Arch, Ubuntu
+alias susegrub="sudo grub2-mkconfig -o /boot/grub2/grub.cfg"    # opensuse
+alias fedbup="sudo grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg" # fedora
+alias ..='cd ..'    # go back
+alias ...='cd ../..'    # go back 2 steps
+alias .='cd /'  # go to root dir
+command -v zoxide >/dev/null 2>&1 && alias cd='z'
+
+# other
+alias src='source ~/.zsh/.zshrc' #source .bashrc
+alias clr='printf "\033c"'
+alias cls='printf "\033c"'
+alias clar='printf "\033c"'
+alias q='exit'
+
+# disk spaces and RAM usage
+alias du='du -sh'
+alias mem='rsc __memory'
+alias disk='rsc __disk'
+
+#fzf
+
+
+# check updates
+
+# updates
+alias dup='sudo zypper dup -y' # distro update for opensuse
+alias up='sudo pacman -Syu'
+
+# git alias
+alias add='git add .'
+alias clone='git clone'
+alias cloned='git clone --depth=1'
+alias branch='git branch -M main'
+alias commit='git commit -m'
+alias push='git push'
+alias pushm='git push -u origin main'
+alias pusho='git push origin' # and add your branch name 
+alias pull='git pull'
+alias info='git_info'
+alias status='git status'
+
+# others
+alias neo='clr && neofetch'
+alias neofetch='clr && neofetch'
+alias ff='clr && fastfetch'
+alias sys='btop'
+alias clock='tty-clock -c -t -D -s'
+
+alias mkdir='mkdir -pv'
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
+
+# change starship prompt
+alias style='.zsh/change_style.zsh'
+
+# Alias for neovim
+if command -v nvim >/dev/null 2>&1; then
+	alias vi='nvim'
+	alias vim='nvim'
+	alias svi='sudo nvim'
+	alias vis='nvim "+set si"'
+elif command -v vim >/dev/null 2>&1; then
+	alias vi='vim'
+	alias svi='sudo vim'
+	alias vis='vim "+set si"'
+fi
+
+# Alias to launch a document, file, or URL in it's default X application
+if command -v xdg-open >/dev/null 2>&1; then
+	alias open='runfree xdg-open'
+fi
+
+# Alias to launch a document, file, or URL in it's default PDF reader
+if command -v evince >/dev/null 2>&1; then
+    alias pdf='runfree evince'
+fi
+
+# Alias For bat
+# Link: https://github.com/sharkdp/bat
+if command -v bat >/dev/null 2>&1; then
+    alias cat='bat --style header,snip,changes'
+fi
+
+# Alias for lazygit
+# Link: https://github.com/jesseduffield/lazygit
+if command -v lazygit >/dev/null 2>&1; then
+    alias lg='lazygit'
+fi
+
+# Alias for FZF
+# Link: https://github.com/junegunn/fzf
+if command -v fzf >/dev/null 2>&1; then
+    alias fzf='fzf --preview "bat --style=numbers --color=always --line-range :500 {}"'
+    # Alias to fuzzy find files in the current folder(s), preview them, and launch in an editor
+	if command -v xdg-open >/dev/null 2>&1; then
+		alias preview='open $(fzf --info=inline --query="${@}")'
+	else
+		alias preview='edit $(fzf --info=inline --query="${@}")'
+	fi
+fi
+
+# Get local IP addresses
+if command -v ip >/dev/null 2>&1; then
+    alias iplocal="ip -br -c a"
+else
+    alias iplocal="ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'"
+fi
+
+# Get public IP addresses
+if command -v curl >/dev/null 2>&1; then
+    alias ipexternal="curl -s ifconfig.me && echo"
+elif command -v wget >/dev/null 2>&1; then
+    alias ipexternal="wget -qO- ifconfig.me && echo"
+fi
+# make executable script
+alias exe='chmod +x'
+
+#Gustom alias
+alias wifi='nmtui'
+alias proyectores='nwg-displays'
+alias c='printf "\033c"'
+alias wchangers='sudo sh /home/logaric/changers/changer_wallpaper_login.sh'
+alias npm='pnpm'
+alias entrarmaquina='docker exec -it $1 zsh'
+alias server='python -m http.server 8000'
+alias antigravity='/opt/antigravity-ide/antigravity-ide'
+alias actu='sudo pacman -Syyu --disable-download-timeout'
+alias sc='cd ~/Documentos/Segundo-Cerebro && opencode'
+alias vpn='sudo openvpn $1'

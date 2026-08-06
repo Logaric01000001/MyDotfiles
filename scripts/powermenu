@@ -1,0 +1,20 @@
+#!/bin/sh
+
+CHOICE=$(printf "Lock\nLogout\nReboot\nShutdown\n" | \
+    fuzzel --dmenu --prompt "Power > ")
+
+case "$CHOICE" in
+  "Lock")
+    gtklock --config "$HOME/.config/niri-lock/config.ini"
+    ;;
+  "Logout")
+    niri msg quit
+    ;;
+  "Reboot")
+    systemctl reboot
+    ;;
+  "Shutdown")
+    systemctl poweroff
+    ;;
+esac
+

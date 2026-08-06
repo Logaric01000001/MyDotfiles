@@ -1,20 +1,46 @@
 # =============================================================================
-#   GITIGNORE — MYDOTFILES
+#   🔒 GITIGNORE — SEGURIDAD & PRIVACIDAD ESTRICTA PARA DOTFILES
 # =============================================================================
 
-# Python Bytecode & Cache
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Archivos temporales y de respaldo
-*.bak
-*.old
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Archivos de entorno y logs
+# --- HISTORIALES Y SESIONES PRIVADAS ---
+.zsh_history
+*.history
+.bash_history
+.lesshst
+.wget-hsts
+.python_history
+.node_repl_history
+.gdb_history
 *.log
+
+# --- CLAVES PRIVADAS, CREDENCIALES Y TOKENS ---
+*.pem
+*.key
+*.pub
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.keystore
+*.pfx
+*.p12
+.env
+.env.*
+secrets.*
+*credentials*
+*.secret
+
+# --- ARCHIVOS TEMPORALES Y RESPALDOS DE DOTFILES ---
+dotfiles_backup_*
+*.bak
+*.tmp
+*.swp
+*~
+
+# --- CACHES Y BINARIOS DEL SISTEMA ---
+__pycache__/
+*.pyc
+*.pyo
 .cache/
+.DS_Store
+Thumbs.db

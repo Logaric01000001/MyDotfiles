@@ -1,9 +1,11 @@
 {
     "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+    
     // =========================================================================
     //   ⚡ FASTFETCH — CONFIGURACIÓN MINIMALISTA & CATPPUCCIN MOCHA
     //   Fácil de personalizar: comenta (//) o descomenta los módulos que desees.
     // =========================================================================
+
     "logo": {
         // --- OPCIONES PARA EL DISEÑO DE LA IZQUIERDA ---
         // 1. Dibujo / texto personalizado desde logo.txt (76 111 103 52 114 105 99):
@@ -33,6 +35,7 @@
             "right": 4
         }
     },
+
     "display": {
         "separator": "  󰅂  ",
         "color": {
@@ -40,6 +43,7 @@
             "title": "cyan"
         }
     },
+
     "modules": [
         // ---------------------------------------------------------------------
         // 1. TÍTULO Y USUARIO
@@ -53,6 +57,7 @@
             "format": "────────────────────────────────────────",
             "outputColor": "bright_black"
         },
+
         // ---------------------------------------------------------------------
         // 2. INFORMACIÓN DEL SISTEMA
         // ---------------------------------------------------------------------
@@ -81,11 +86,13 @@
             "key": "󰏗 Paquetes",
             "keyColor": "blue"
         },
+
         {
             "type": "custom",
             "format": "────────────────────────────────────────",
             "outputColor": "bright_black"
         },
+
         // ---------------------------------------------------------------------
         // 3. ENTORNO DE ESCRITORIO Y VENTANAS
         // ---------------------------------------------------------------------
@@ -109,11 +116,13 @@
             "key": " Shell CLI",
             "keyColor": "yellow"
         },
+
         {
             "type": "custom",
             "format": "────────────────────────────────────────",
             "outputColor": "bright_black"
         },
+
         // ---------------------------------------------------------------------
         // 4. HARDWARE Y RECURSOS
         // ---------------------------------------------------------------------
@@ -137,6 +146,7 @@
             "key": "󰋊 Almacenamiento",
             "keyColor": "green"
         },
+
         // ---------------------------------------------------------------------
         // 5. PALETA DE COLORES (CATPPUCCIN MOCHA)
         // ---------------------------------------------------------------------

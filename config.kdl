@@ -11,6 +11,9 @@
 // Shell de escritorio (Noctalia)
 spawn-at-startup "noctalia"
 
+//ProtonVPN
+spawn-at-startup "protonvpn" "connect"
+
 // Agente de autenticación Polkit GNOME (Ruta estándar en Arch Linux)
 spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
 
@@ -199,6 +202,12 @@ animations {
 window-rule {
     geometry-corner-radius 12
     clip-to-geometry true
+}
+
+// Regla para navegadores de archivos: Fondo 100% sólido y opaco (sin transparencias)
+window-rule {
+    match app-id=r#"^(dolphin|org\.kde\.dolphin|thunar|nemo|nautilus)$"#
+    opacity 1.0
 }
 
 // Ventanas flotantes comunes y diálogos de configuración/sistema

@@ -1,0 +1,7 @@
+[bell]
+duration = 0
+
+[general]
+import = [
+    "~/.config/alacritty/themes/noctalia.toml"
+]
