@@ -80,7 +80,6 @@ PACMAN_PKGS=(
     swayidle
     rofi-wayland
     kitty
-    alacritty
     dolphin
     fastfetch
     zsh
@@ -168,7 +167,6 @@ mkdir -p "$HOME/.config/swaylock"
 mkdir -p "$HOME/.config/rofi"
 mkdir -p "$HOME/.config/noctalia"
 mkdir -p "$HOME/.config/kitty"
-mkdir -p "$HOME/.config/alacritty"
 mkdir -p "$HOME/.config/fastfetch"
 mkdir -p "$HOME/.config/Kvantum"
 mkdir -p "$HOME/.config/VSCodium/User"
@@ -234,20 +232,12 @@ if [ -d "$DOTFILES_DIR/noctalia" ]; then
     fi
 fi
 
-# Terminales
+# Terminal Kitty
 if [ -d "$DOTFILES_DIR/kitty" ]; then
     safe_install_file "$DOTFILES_DIR/kitty/kitty.conf" "$HOME/.config/kitty/kitty.conf"
     if [ -d "$DOTFILES_DIR/kitty/themes" ]; then
         mkdir -p "$HOME/.config/kitty/themes"
         cp -rf "$DOTFILES_DIR/kitty/themes"/* "$HOME/.config/kitty/themes/" 2>/dev/null || true
-    fi
-fi
-
-if [ -d "$DOTFILES_DIR/alacritty" ]; then
-    safe_install_file "$DOTFILES_DIR/alacritty/alacritty.toml" "$HOME/.config/alacritty/alacritty.toml"
-    if [ -d "$DOTFILES_DIR/alacritty/themes" ]; then
-        mkdir -p "$HOME/.config/alacritty/themes"
-        cp -rf "$DOTFILES_DIR/alacritty/themes"/* "$HOME/.config/alacritty/themes/" 2>/dev/null || true
     fi
 fi
 
@@ -351,7 +341,7 @@ fi
 
 echo -e "${BOLD}Resumen de atajos configurados:${NC}"
 echo -e "  • ${CYAN}Mod + Shift + H${NC}    → Guía interactiva de atajos en pantalla (Help)"
-echo -e "  • ${CYAN}Mod + Enter${NC}        → Terminal (Kitty / Alacritty)"
+echo -e "  • ${CYAN}Mod + Enter${NC}        → Terminal (Kitty)"
 echo -e "  • ${CYAN}Mod + E${NC}            → Navegador de Archivos (Dolphin - Fondo Sólido Opaco)"
 echo -e "  • ${CYAN}Mod + C${NC}            → Editor de código (VScodium)"
 echo -e "  • ${CYAN}Mod + S${NC}            → Menú de Energía (Apagar, Reiniciar, Bloquear, Logout)"

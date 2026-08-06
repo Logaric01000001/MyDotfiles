@@ -1,7 +1,12 @@
 # 🌌 MyDotfiles — Niri Compositor & Catppuccin Mocha Work Environment
 
-Un entorno de trabajo moderno, ultrarrápido y visualmente impresionante para **Arch Linux** y derivados, basado en el compositor **Niri (Wayland)**, la suite visual **Catppuccin Mocha**, la shell de escritorio **Noctalia**, la terminal **Kitty / Alacritty**, la shell **Zsh**, **Fastfetch**, **VSCodium** y la suite de utilidades personalizadas.
+Un entorno de trabajo moderno, ultrarrápido y visualmente impresionante para **Arch Linux** y derivados, basado en el compositor **Niri (Wayland)**, la suite visual **Catppuccin Mocha**, la shell de escritorio **Noctalia**, la terminal **Kitty**, el navegador de archivos **Dolphin**, la shell **Zsh**, **Fastfetch**, **VSCodium** y la suite de utilidades personalizadas.
 
+> [!IMPORTANT]
+> **Privacidad Garantizada:** Este repositorio ha sido filtrado e inspeccionado minuciosamente. No contiene ningún secreto, clave privada (SSH/GPG), token de autenticación ni historial de comandos.
+
+> [!TIP]
+> **Navegador de Archivos Opaco:** Dolphin está configurado con fondo 100% sólido y opaco (`KvArcDark`) sin transparencias molestas, garantizando que los nombres de archivos y textos sean nítidos y fáciles de leer sobre cualquier fondo de pantalla.
 ---
 
 ## 🚀 Instalación Rápida (Un Solo Comando)
@@ -37,7 +42,6 @@ MyDotfiles/
 ├── swaylock.conf               # Pantalla de bloqueo de respaldo con Swaylock
 ├── Kvantum/
 │   └── kvantum.kvconfig        # Tema Qt/Kvantum sin transparencias en vistas
-├── alacritty/                  # Configuración y temas de la terminal Alacritty
 ├── kitty/                      # Configuración y temas Catppuccin/Noctalia de Kitty
 ├── rofi/                       # Lanzador de aplicaciones y menú flotante
 ├── noctalia/                   # Shell de escritorio, barra y paneles
@@ -58,7 +62,7 @@ Los atajos de teclado usan la tecla **`Mod`** (Tecla Windows / Super):
 | Atajo | Función / Aplicación |
 | :--- | :--- |
 | **`Mod + Shift + H`** | ❓ **Guía Interactiva en Pantalla** (Help Menu) |
-| **`Mod + Enter`** | 💻 **Terminal** (Kitty / Alacritty) |
+| **`Mod + Enter`** | 💻 **Terminal** (Kitty) |
 | **`Mod + E`** | 📁 **Navegador de Archivos** (Dolphin - Fondo Sólido) |
 | **`Mod + C`** | 📝 **Editor de Código** (VSCodium) |
 | **`Mod + B`** | 🌐 **Navegador Web** (Zen Browser) |
@@ -78,7 +82,7 @@ Los atajos de teclado usan la tecla **`Mod`** (Tecla Windows / Super):
 - **Compositor Wayland:** `niri`
 - **Shell de Escritorio & Barra:** `noctalia`
 - **Lanzador de Apps:** `rofi-wayland`
-- **Terminales:** `kitty`, `alacritty`
+- **Terminal:** `kitty`
 - **Navegador de Archivos:** `dolphin` + `kvantum` (`KvArcDark` opaco)
 - **Shell & Prompt:** `zsh`, `starship`, `powerlevel10k`, `eza`, `zoxide`
 - **Portapapeles & Notificaciones:** `cliphist`, `wl-clipboard`, `fuzzel`
