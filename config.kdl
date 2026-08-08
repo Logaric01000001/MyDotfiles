@@ -218,6 +218,12 @@ window-rule {
     open-floating true
 }
 
+// Regla para duplicación de pantalla (wl-mirror) en modo pantalla completa
+window-rule {
+    match app-id="wl-mirror"
+    open-fullscreen true
+}
+
 // Ventanas emergentes de guardado/apertura de archivos o diálogos
 window-rule {
     match title=r#"^(Abrir|Guardar|Open|Save|Confirmar|Confirmación|Properties|Configuración|Preferences)$"#

@@ -45,9 +45,9 @@ case "$choice" in
     niri msg output "$EXT_OUTPUT" position set 1366 0 2>/dev/null || true
     
     if command -v wl-mirror &>/dev/null; then
-        wl-mirror "$PRIMARY_OUTPUT" --fullscreen &>/dev/null &
+        wl-mirror --fullscreen-output "$EXT_OUTPUT" "$PRIMARY_OUTPUT" &>/dev/null &
         disown
-        notify-send -a "Pantallas" -i "display" "Modo Espejo Activado" "Transmitiendo pantalla principal en tiempo real" 2>/dev/null || true
+        notify-send -a "Pantallas" -i "display" "Modo Espejo (Duplicado) Activado" "Transmitiendo $PRIMARY_OUTPUT -> $EXT_OUTPUT en tiempo real" 2>/dev/null || true
     else
         notify-send -a "Pantallas" -u critical -i "display" "Requiere wl-mirror" "Instala wl-mirror ejecutando: sudo pacman -S wl-mirror" 2>/dev/null || true
     fi
