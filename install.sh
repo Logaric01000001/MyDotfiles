@@ -79,6 +79,7 @@ PACMAN_PKGS=(
     swaybg
     swayidle
     rofi-wayland
+    wl-mirror
     kitty
     dolphin
     fastfetch
