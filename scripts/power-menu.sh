@@ -16,10 +16,10 @@ choice=$(echo -e "Lock\nShutdown\nReboot\nSuspend\nLogout\nCancel" | rofi -dmenu
 
 case "$choice" in
   Lock)     lock-and-restore.sh ;;               # Bloquear pantalla y restaurar Noctalia
-  Shutdown) systemctl poweroff ;;                 # Apagar el equipo
-  Reboot)   systemctl reboot   ;;                 # Reiniciar el equipo
-  Suspend)  systemctl suspend  ;;                 # Suspender
-  Logout)   niri msg action quit || loginctl terminate-session "$XDG_SESSION_ID" ;; # Cerrar sesión
+  Shutdown) save-state.sh && systemctl poweroff ;;                 # Apagar el equipo
+  Reboot)   save-state.sh && systemctl reboot   ;;                 # Reiniciar el equipo
+  Suspend)  save-state.sh && systemctl suspend  ;;                 # Suspender
+  Logout)   save-state.sh && (niri msg action quit || loginctl terminate-session "$XDG_SESSION_ID") ;; # Cerrar sesión
   *) exit 0 ;;                                    # Cancelar o salir
 esac
 

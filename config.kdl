@@ -10,6 +10,7 @@
 
 // Shell de escritorio (Noctalia)
 spawn-at-startup "noctalia"
+spawn-at-startup "bash" "-c" "sleep 2 && PATH=$HOME/.local/bin:$PATH restore-state.sh"
 
 //ProtonVPN
 spawn-at-startup "protonvpn" "connect"
@@ -20,13 +21,13 @@ spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
 // Demonio de notificaciones (Opcional si Noctalia no provee centro de notificaciones)
 // spawn-at-startup "mako"
 
-// Bloqueo y gestión de inactividad (bloquea a los 5 min con hyprlock, apaga pantallas a los 10 min, restaura Noctalia al reanudar)
+// Bloqueo y gestión de inactividad (bloquea a los 5 min con lock-and-restore, apaga pantallas a los 10 min, restaura Noctalia al reanudar)
 spawn-at-startup "swayidle" "-w" \
-    "timeout" "300" "hyprlock" \
+    "timeout" "300" "$HOME/.local/bin/lock-and-restore.sh" \
     "timeout" "600" "niri msg action power-off-monitors" \
     "resume" "niri msg action power-on-monitors" \
     "resume" "$HOME/.local/bin/fix-noctalia-resume.sh" \
-    "before-sleep" "hyprlock"
+    "before-sleep" "$HOME/.local/bin/lock-and-restore.sh"
 
 
 // -----------------------------------------------------------------------------

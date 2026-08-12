@@ -8,8 +8,8 @@ CACHE_DIR="$HOME/.cache"
 mkdir -p "$CACHE_DIR"
 LOGFILE="$CACHE_DIR/lock-and-restore.log"
 
-# Marca de inicio
-echo "$(date +'%Y-%m-%d %H:%M:%S') – Bloqueando con hyprlock" >> "$LOGFILE"
+# Guardar el estado actual de Bluetooth y DND antes de bloquear
+"$HOME/.local/bin/save-state.sh" >> "$LOGFILE" 2>&1
 
 # Ejecutar hyprlock (bloquea hasta que el usuario desbloquee)
 hyprlock
