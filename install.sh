@@ -295,6 +295,12 @@ if [ -f "$DOTFILES_DIR/systemd/noctalia-resume.service" ]; then
     fi
 fi
 
+# Evitar conflictos de notificaciones enmascarando swaync
+if systemctl --user list-unit-files | grep -q swaync.service 2>/dev/null; then
+    echo -e "   ${BLUE}🔔 Enmascarando swaync.service para evitar conflictos con las notificaciones de Noctalia...${NC}"
+    systemctl --user mask swaync.service 2>/dev/null || true
+fi
+
 # Configuración personalizada de SDDM
 if [ -d "/usr/share/sddm/themes/SilentSDDM" ] && [ -f "$DOTFILES_DIR/sddm/default-left.conf" ]; then
     if command -v sudo &>/dev/null; then
