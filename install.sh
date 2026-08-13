@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-#   🚀 ALL-IN-ONE INSTALLER — NIRI COMPOSITOR & CATPPUCCIN MOCHA DOTFILES
+#   ALL-IN-ONE INSTALLER — NIRI COMPOSITOR & CATPPUCCIN MOCHA DOTFILES
 #   Instalador inteligente con prevención de conflictos y respaldo automático
 # =============================================================================
 
@@ -19,7 +19,7 @@ NC='\033[0m' # Sin color
 clear 2>/dev/null || true
 
 echo -e "${CYAN}╔═════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║     🌌 INSTALADOR MAESTRO — DOTFILES NIRI & CATPPUCCIN MOCHA    ║${NC}"
+echo -e "${CYAN}║     INSTALADOR MAESTRO — DOTFILES NIRI & CATPPUCCIN MOCHA    ║${NC}"
 echo -e "${CYAN}║     Instalación Segura, Cero Conflictos y Respaldo Automático   ║${NC}"
 echo -e "${CYAN}╚═════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
@@ -34,7 +34,7 @@ else
 fi
 
 if [ ! -f "$DOTFILES_DIR/config.kdl" ]; then
-    echo -e "${BLUE}📥 [Paso Previo] Descargando repositorio en ${DOTFILES_DIR}...${NC}"
+    echo -e "${BLUE}[Paso Previo] Descargando repositorio en ${DOTFILES_DIR}...${NC}"
     git clone https://github.com/Logaric01000001/MyDotfiles.git "$DOTFILES_DIR" || {
         echo -e "${RED}❌ No se pudo descargar el repositorio. Verifica tu conexión a internet.${NC}"
         exit 1
@@ -45,7 +45,7 @@ fi
 # 2. VERIFICACIÓN DE SISTEMA Y PREVENCIÓN DE BLOQUEOS
 # -----------------------------------------------------------------------------
 if [ ! -f /etc/arch-release ]; then
-    echo -e "${YELLOW}⚠️  Aviso: Este instalador está optimizado para Arch Linux y derivados (EndeavourOS, CachyOS, Manjaro).${NC}"
+    echo -e "${YELLOW}Aviso: Este instalador está optimizado para Arch Linux y derivados (EndeavourOS, CachyOS, Manjaro).${NC}"
     if [ -t 0 ]; then
         read -rp "   ¿Deseas continuar de todas formas? [s/N]: " confirm
         if [[ ! "$confirm" =~ ^[sS]$ ]]; then
@@ -57,7 +57,7 @@ fi
 
 # Comprobar si pacman está bloqueado por otro proceso
 if [ -f /var/lib/pacman/db.lck ]; then
-    echo -e "${YELLOW}⚠️  El archivo de bloqueo de pacman (/var/lib/pacman/db.lck) está presente.${NC}"
+    echo -e "${YELLOW}El archivo de bloqueo de pacman (/var/lib/pacman/db.lck) está presente.${NC}"
     echo -e "   Es posible que otra actualización o instalación esté en curso."
     if [ -t 0 ]; then
         read -rp "   ¿Deseas esperar 5 segundos y reintentar? [S/n]: " retry
@@ -106,7 +106,7 @@ PACMAN_PKGS=(
     slurp
 )
 
-echo -e "${MAGENTA}${BOLD}📦 [1/4] Comprobando e instalando paquetes oficiales...${NC}"
+echo -e "${MAGENTA}${BOLD}[1/4] Comprobando e instalando paquetes oficiales...${NC}"
 if command -v pacman &>/dev/null; then
     if command -v sudo &>/dev/null; then
         sudo pacman -S --needed --noconfirm "${PACMAN_PKGS[@]}" 2>/dev/null || true
@@ -117,14 +117,14 @@ fi
 
 # Verificación / Instalación de AUR Helper
 echo ""
-echo -e "${MAGENTA}${BOLD}🔍 [2/4] Verificando gestor de AUR (yay / paru)...${NC}"
+echo -e "${MAGENTA}${BOLD}[2/4] Verificando gestor de AUR (yay / paru)...${NC}"
 AUR_HELPER=""
 if command -v yay &>/dev/null; then
     AUR_HELPER="yay"
 elif command -v paru &>/dev/null; then
     AUR_HELPER="paru"
 elif command -v pacman &>/dev/null; then
-    echo -e "${YELLOW}⚡ Instalando 'yay' automáticamente para paquetes de AUR...${NC}"
+    echo -e "${YELLOW}Instalando 'yay' automáticamente para paquetes de AUR...${NC}"
     TMP_DIR=$(mktemp -d)
     git clone https://aur.archlinux.org/yay-bin.git "$TMP_DIR/yay-bin" 2>/dev/null || true
     (cd "$TMP_DIR/yay-bin" && makepkg -si --noconfirm 2>/dev/null) || true
@@ -137,17 +137,17 @@ if [ -n "$AUR_HELPER" ]; then
     
     # Instalar Noctalia Shell, Zen Browser y VScodium desde AUR
     if ! command -v noctalia &>/dev/null; then
-        echo -e "${BLUE}📦 Instalando Noctalia Shell desde AUR...${NC}"
+        echo -e "${BLUE}Instalando Noctalia Shell desde AUR...${NC}"
         $AUR_HELPER -S --needed --noconfirm noctalia-bin || $AUR_HELPER -S --needed --noconfirm noctalia || true
     fi
 
     if ! command -v zen-browser &>/dev/null; then
-        echo -e "${BLUE}📦 Instalando Zen Browser desde AUR...${NC}"
+        echo -e "${BLUE}Instalando Zen Browser desde AUR...${NC}"
         $AUR_HELPER -S --needed --noconfirm zen-browser-bin || true
     fi
 
     if ! command -v codium &>/dev/null && ! command -v vscodium &>/dev/null; then
-        echo -e "${BLUE}📦 Instalando VScodium desde AUR...${NC}"
+        echo -e "${BLUE}Instalando VScodium desde AUR...${NC}"
         $AUR_HELPER -S --needed --noconfirm vscodium-bin || true
     fi
 fi
@@ -156,7 +156,7 @@ fi
 # 4. CREACIÓN DE DIRECTORIOS Y SISTEMA DE RESPALDO SEGURO
 # -----------------------------------------------------------------------------
 echo ""
-echo -e "${MAGENTA}${BOLD}📂 [3/4] Preparando carpetas y gestionando respaldos...${NC}"
+echo -e "${MAGENTA}${BOLD}[3/4] Preparando carpetas y gestionando respaldos...${NC}"
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="$HOME/.config/dotfiles_backup_$TIMESTAMP"
@@ -181,7 +181,7 @@ mkdir -p "$HOME/Descargas"
 # 5. COPIA SEGURA DE ARCHIVOS (RESOLUCIÓN DE CONFLICTOS)
 # -----------------------------------------------------------------------------
 echo ""
-echo -e "${MAGENTA}${BOLD}📋 [4/4] Instalando archivos de configuración (Copia directa)...${NC}"
+echo -e "${MAGENTA}${BOLD}[4/4] Instalando archivos de configuración (Copia directa)...${NC}"
 
 safe_install_file() {
     local src="$1"
@@ -200,7 +200,7 @@ safe_install_file() {
                 mkdir -p "$BACKUP_DIR/$(dirname "$rel_dest")"
                 cp -a "$dest" "$BACKUP_DIR/$rel_dest"
                 HAS_BACKUP=true
-                echo -e "   ${YELLOW}📦 Respaldo creado:${NC} $dest → $BACKUP_DIR/$rel_dest"
+                echo -e "   ${YELLOW}Respaldo creado:${NC} $dest → $BACKUP_DIR/$rel_dest"
             fi
             rm -f "$dest"
         fi
@@ -289,7 +289,7 @@ fi
 
 # Servicio systemd para restaurar Noctalia tras suspender/hibernar
 if [ -f "$DOTFILES_DIR/systemd/noctalia-resume.service" ]; then
-    echo -e "\n${BLUE}⚡ Configurando servicio de reanudación de Noctalia...${NC}"
+    echo -e "\n${BLUE}Configurando servicio de reanudación de Noctalia...${NC}"
     if command -v sudo &>/dev/null; then
         sudo cp -f "$DOTFILES_DIR/systemd/noctalia-resume.service" "/etc/systemd/system/noctalia-resume@.service" 2>/dev/null && \
         sudo systemctl daemon-reload 2>/dev/null && \
@@ -300,7 +300,7 @@ fi
 
 # Evitar conflictos de notificaciones enmascarando swaync
 if systemctl --user list-unit-files | grep -q swaync.service 2>/dev/null; then
-    echo -e "   ${BLUE}🔔 Enmascarando swaync.service para evitar conflictos con las notificaciones de Noctalia...${NC}"
+    echo -e "   ${BLUE}Enmascarando swaync.service para evitar conflictos con las notificaciones de Noctalia...${NC}"
     systemctl --user mask swaync.service 2>/dev/null || true
 fi
 
@@ -322,7 +322,7 @@ done
 
 # Cambiar shell por defecto a Zsh si está instalado
 if command -v zsh &>/dev/null && [ "$SHELL" != "$(which zsh)" ]; then
-    echo -e "${BLUE}🐚 Estableciendo Zsh como shell por defecto...${NC}"
+    echo -e "${BLUE}Estableciendo Zsh como shell por defecto...${NC}"
     chsh -s "$(which zsh)" "$USER" 2>/dev/null || true
 fi
 
@@ -331,7 +331,7 @@ fi
 # -----------------------------------------------------------------------------
 if pgrep -x niri &>/dev/null; then
     echo ""
-    echo -e "${BLUE}⚡ Niri está en ejecución. Recargando configuración al vuelo...${NC}"
+    echo -e "${BLUE}Niri está en ejecución. Recargando configuración al vuelo...${NC}"
     niri msg action load-config-file 2>/dev/null || true
 fi
 
@@ -340,11 +340,11 @@ fi
 # -----------------------------------------------------------------------------
 echo ""
 echo -e "${GREEN}╔═════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║           🎉 ¡INSTALACIÓN COMPLETADA SIN CONFLICTOS!            ║${NC}"
+echo -e "${GREEN}║           ¡INSTALACIÓN COMPLETADA SIN CONFLICTOS!            ║${NC}"
 echo -e "${GREEN}╚═════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 if [ "$HAS_BACKUP" = true ]; then
-    echo -e "${YELLOW}📁 Tus configuraciones anteriores se guardaron de forma segura en:${NC}"
+    echo -e "${YELLOW}Tus configuraciones anteriores se guardaron de forma segura en:${NC}"
     echo -e "   ${BOLD}$BACKUP_DIR${NC}"
     echo ""
 fi
@@ -363,5 +363,5 @@ echo -e "  • ${CYAN}Mod + L${NC}            → Bloquear pantalla (Hyprlock + 
 echo -e "  • ${CYAN}Mod + F${NC}            → Maximizar ventana"
 echo -e "  • ${CYAN}Mod + Q${NC}            → Cerrar ventana activa"
 echo ""
-echo -e "${GREEN}✨ ¡Todo listo! Tu entorno dotfiles está 100% instalado, protegido y sin transparencias molestas.${NC}"
+echo -e "${GREEN}¡Todo listo! Tu entorno dotfiles está 100% instalado, protegido y sin transparencias molestas.${NC}"
 echo ""
