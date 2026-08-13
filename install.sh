@@ -252,6 +252,9 @@ fi
 safe_install_file "$DOTFILES_DIR/Kvantum/kvantum.kvconfig" "$HOME/.config/Kvantum/kvantum.kvconfig"
 safe_install_file "$DOTFILES_DIR/dolphinrc" "$HOME/.config/dolphinrc"
 
+# Asociaciones de archivos (MIME types)
+safe_install_file "$DOTFILES_DIR/mimeapps.list" "$HOME/.config/mimeapps.list"
+
 # VSCodium / VSCode
 safe_install_file "$DOTFILES_DIR/vscode/settings.json" "$HOME/.config/VSCodium/User/settings.json"
 
