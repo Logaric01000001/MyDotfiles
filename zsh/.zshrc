@@ -193,3 +193,6 @@ export PATH="/home/logaric/.local/bin:$PATH"
 
 export PATH=$PATH:/home/logaric/.spicetify
 export PATH="$HOME/.local/bin:$PATH"
+
+# Segundo Cerebro
+export SECOND_BRAIN="$HOME/Documentos/Segundo-Cerebro"

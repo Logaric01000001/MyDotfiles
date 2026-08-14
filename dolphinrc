@@ -1,8 +1,16 @@
-[Icons]
-Theme=TokyoNight
+[ExtractDialog]
+1366x768 screen: Height=718
+1366x768 screen: Width=891
 
 [General]
 Version=202
+
+[Icons]
+Theme=TokyoNight
+
+[KFileDialog Settings]
+Places Icons Auto-resize=false
+Places Icons Static Size=22
 
 [MainWindow]
 MenuBar=Disabled
