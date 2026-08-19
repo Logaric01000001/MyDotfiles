@@ -252,6 +252,16 @@ fi
 safe_install_file "$DOTFILES_DIR/Kvantum/kvantum.kvconfig" "$HOME/.config/Kvantum/kvantum.kvconfig"
 safe_install_file "$DOTFILES_DIR/dolphinrc" "$HOME/.config/dolphinrc"
 
+# Configurar Kitty como terminal por defecto en Dolphin / KDE
+if command -v kwriteconfig6 &>/dev/null; then
+    kwriteconfig6 --file kdeglobals --group General --key TerminalApplication kitty
+    kwriteconfig6 --file kdeglobals --group General --key TerminalService kitty.desktop
+elif command -v kwriteconfig5 &>/dev/null; then
+    kwriteconfig5 --file kdeglobals --group General --key TerminalApplication kitty
+    kwriteconfig5 --file kdeglobals --group General --key TerminalService kitty.desktop
+fi
+
+
 # Asociaciones de archivos (MIME types)
 safe_install_file "$DOTFILES_DIR/mimeapps.list" "$HOME/.config/mimeapps.list"
 
@@ -324,6 +334,20 @@ done
 if command -v zsh &>/dev/null && [ "$SHELL" != "$(which zsh)" ]; then
     echo -e "${BLUE}Estableciendo Zsh como shell por defecto...${NC}"
     chsh -s "$(which zsh)" "$USER" 2>/dev/null || true
+fi
+
+# Configuración optimizada de Bluetooth (prevención de desconexiones y ocultación de MACs aleatorias)
+echo -e "\n${BLUE}Configurando Bluetooth...${NC}"
+if [ -f /etc/bluetooth/main.conf ] && command -v sudo &>/dev/null; then
+    sudo sed -i 's/#ControllerMode = dual/ControllerMode = bredr/' /etc/bluetooth/main.conf 2>/dev/null || true
+    sudo sed -i 's/#FastConnectable = false/FastConnectable = true/' /etc/bluetooth/main.conf 2>/dev/null || true
+    sudo sed -i 's/#AutoEnable=true/AutoEnable=true/' /etc/bluetooth/main.conf 2>/dev/null || true
+    sudo sed -i 's/#NameResolving = true/NameResolving = true/' /etc/bluetooth/main.conf 2>/dev/null || true
+    sudo sed -i 's/#RemoteNameRequestRetryDelay = 300/RemoteNameRequestRetryDelay = 5/' /etc/bluetooth/main.conf 2>/dev/null || true
+    
+    echo "options btusb enable_autosuspend=n" | sudo tee /etc/modprobe.d/btusb.conf >/dev/null 2>/dev/null || true
+    sudo systemctl restart bluetooth 2>/dev/null || true
+    echo -e "   ${GREEN}✔ Bluetooth optimizado correctamente.${NC}"
 fi
 
 # -----------------------------------------------------------------------------
