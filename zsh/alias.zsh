@@ -39,7 +39,7 @@ alias disk='rsc __disk'
 
 # updates
 alias dup='sudo zypper dup -y' # distro update for opensuse
-alias up='sudo pacman -Syu'
+alias up='sysupdate.sh'
 
 # git alias
 alias add='git add .'
