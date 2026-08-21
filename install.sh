@@ -265,6 +265,15 @@ fi
 # Asociaciones de archivos (MIME types)
 safe_install_file "$DOTFILES_DIR/mimeapps.list" "$HOME/.config/mimeapps.list"
 
+# Accesos directos personalizados (como LibreOffice con XWayland)
+if [ -d "$DOTFILES_DIR/applications" ]; then
+    mkdir -p "$HOME/.local/share/applications"
+    for app in "$DOTFILES_DIR/applications"/*; do
+        safe_install_file "$app" "$HOME/.local/share/applications/$(basename "$app")"
+    done
+    update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+fi
+
 # VSCodium / VSCode
 safe_install_file "$DOTFILES_DIR/vscode/settings.json" "$HOME/.config/VSCodium/User/settings.json"
 
