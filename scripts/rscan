@@ -1,0 +1,2 @@
+#!/bin/bash
+rustscan -a "$1" --ulimit 5000 -- -Pn -sC -sV

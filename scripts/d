@@ -1,0 +1,114 @@
+#!/usr/bin/env python3
+# Este script es para iniciar mis maquinas persistente con docker
+
+import os
+
+def volver_al_menu():
+        print("")
+        print("0.Volver al Menu")
+        print("8.Cerrar Programa")
+        print("")
+        re = int(input("Numero: "))
+        
+        if re == 0:
+            return 0
+            
+        elif re == 8:
+            return 8
+
+        else:
+            print("Coloque 0 o 8")
+
+
+
+while True:
+    try:
+        print("")
+        print("Este proyecto es para facilitar la entrada a las maquinas persistentes de Docker")
+        print("Escoja una opcion:")
+        print("1.Listar Imagenes")
+        print("2.Listar Contenedores Persistente")
+        print("3.Descargar Imagen")
+        print("4.Crear Contenedor Persistente")
+        print("5.Entrar En Contenedor Persistente")
+        print("6.Eliminar Contenedor Persistente")
+        print("7.Eliminar Contenedor Base")
+        print("8.Exit/Salir")
+        print("")
+        opcion = int(input("Escoge una opcion: "))
+
+        if opcion == 1:
+            os.system('printf "\033c"')
+            print("")
+            print("Imagenes")
+            os.system("docker images")
+
+        elif opcion == 2:
+            os.system('printf "\033c"')
+            print("")
+            print("Contenedores Persistentes")
+            os.system("docker ps -a")
+
+        elif opcion == 3:
+            os.system('printf "\033c"')
+            print("")
+            print("Descargar Imagen")
+            nombre_descargar_imagen = input("Nombre de la Imagen: ")
+            print("Descargando...")
+            os.system(f"docker pull {nombre_descargar_imagen}")
+
+        elif opcion == 4:
+            os.system('printf "\033c"')
+            print("")
+            print("Crear Contenedor Persistente")
+            nombre_crear_contenedor = input("Nombre para tu nuevo contenedor: ")
+            imagen_crear_contenedor = input("Coloque el nombre de la imagen base (ej: alpine): ")
+            print("Creando...")
+            os.system(f"docker run --network host -dit --name {nombre_crear_contenedor} {imagen_crear_contenedor} sh")
+
+        elif opcion == 5:
+            os.system('printf "\033c"')
+            print("")
+            print("Entrar en Contenedor")
+            entrar_nombre = input("Coloque el nombre: ")
+            print("Entrando...")
+            os.system(f"docker start {entrar_nombre} ")
+            os.system(f'docker exec -it {entrar_nombre} sh -c "command -v zsh >/dev/null && exec zsh || exec sh"')
+            os.system(f"docker stop {entrar_nombre}")
+
+        elif opcion == 6:
+            os.system('printf "\033c"')
+            print("")
+            print("Eliminar Contenedor Persistente")
+            nombre_elimar_contenedor_persistente = input("Coloque el nombre: ")
+            print("Eliminando...")
+            os.system(f"docker rm -f {nombre_elimar_contenedor_persistente}")
+
+        elif opcion == 7:
+            os.system('printf "\033c"')
+            print("")
+            print("Eliminar Imagen")
+            nombre_eliminar_imagen = input("Coloque la Imagen: ")
+            print("Eliminando...")
+            os.system(f"docker rmi {nombre_eliminar_imagen}")
+
+
+        resultado = volver_al_menu()
+
+        if resultado == 0:
+            os.system('printf "\033c"')
+            continue
+
+        elif resultado == 8:
+            os.system('printf "\033c"')
+            break
+
+        elif opcion == 8:
+            os.system('printf "\033c"')
+            print("")
+            print("BYE!")
+            break
+
+    except ValueError:
+        print("")
+        print("Error: Debes ingresar un número entero válido del 1 al 8. Intenta de nuevo.")

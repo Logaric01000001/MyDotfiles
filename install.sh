@@ -171,6 +171,7 @@ mkdir -p "$HOME/.config/kitty"
 mkdir -p "$HOME/.config/fastfetch"
 mkdir -p "$HOME/.config/Kvantum"
 mkdir -p "$HOME/.config/VSCodium/User"
+mkdir -p "$HOME/.config/Antigravity IDE/User"
 mkdir -p "$HOME/.zsh"
 mkdir -p "$HOME/.local/bin"
 mkdir -p "$HOME/Imágenes/Capturas"
@@ -274,8 +275,9 @@ if [ -d "$DOTFILES_DIR/applications" ]; then
     update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
 fi
 
-# VSCodium / VSCode
+# Antigravity IDE / VSCodium / VSCode
 safe_install_file "$DOTFILES_DIR/vscode/settings.json" "$HOME/.config/VSCodium/User/settings.json"
+safe_install_file "$DOTFILES_DIR/vscode/settings.json" "$HOME/.config/Antigravity IDE/User/settings.json"
 
 # Shell Zsh
 if [ -d "$DOTFILES_DIR/zsh" ]; then

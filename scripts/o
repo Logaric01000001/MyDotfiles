@@ -1,0 +1,283 @@
+#!/usr/bin/env python3
+"""
+File Organizer - Single File Version
+=====================================
+Organizador de archivos con GUI (tkinter) en un solo archivo.
+- Ordena archivos por extensión en carpetas
+- Detecta duplicados por hash MD5
+- Funciona en Windows, Linux, Mac
+- Sin dependencias externas (solo stdlib)
+
+Uso: python3 file_organizer.py
+"""
+
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox, scrolledtext
+import threading
+import hashlib
+from pathlib import Path
+from typing import Callable, Optional
+
+
+# ============================================================
+# CONFIG - Mapeo extensiones → carpetas
+# ============================================================
+EXTENSIONES_A_CARPETAS = {
+    "imagenes": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".svg"],
+    "documentos": [".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".tex"],
+    "hojas_calculo": [".xls", ".xlsx", ".csv", ".ods"],
+    "presentaciones": [".ppt", ".pptx", ".odp"],
+    "videos": [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm"],
+    "audio": [".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a"],
+    "comprimidos": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2"],
+    "ejecutables": [".exe", ".msi", ".deb", ".rpm", ".appimage", ".sh"],
+    "codigo": [".py", ".js", ".ts", ".html", ".css", ".java", ".cpp", ".c", ".rs", ".go", ".php"],
+    "otros": []
+}
+
+
+def obtener_carpeta_para_extension(extension: str) -> str:
+    """Devuelve la carpeta destino para una extensión dada."""
+    extension = extension.lower()
+    for carpeta, extensiones in EXTENSIONES_A_CARPETAS.items():
+        if extension in extensiones:
+            return carpeta
+    return "otros"
+
+
+# ============================================================
+# LOGIC - Lógica pura (sin GUI, testeable)
+# ============================================================
+def escanear_archivos(carpeta_origen: str) -> list[dict]:
+    """Escanea archivos en carpeta y devuelve lista con info y carpeta destino."""
+    archivos = []
+    for entrada in Path(carpeta_origen).iterdir():
+        if entrada.is_file():
+            extension = entrada.suffix.lower()
+            archivos.append({
+                "nombre": entrada.name,
+                "ruta": str(entrada),
+                "extension": extension,
+                "tamaño": entrada.stat().st_size,
+                "carpeta_destino": obtener_carpeta_para_extension(extension)
+            })
+    return archivos
+
+
+def organizar_archivos(carpeta_origen: str, archivos: list[dict],
+                       callback_progreso: Optional[Callable[[int, int], None]] = None) -> dict:
+    """Mueve archivos a sus carpetas destino. Retorna resumen."""
+    resultado = {"movidos": 0, "errores": 0, "detalles": []}
+
+    for i, archivo in enumerate(archivos):
+        carpeta_destino = Path(carpeta_origen) / archivo["carpeta_destino"]
+        carpeta_destino.mkdir(exist_ok=True)
+
+        ruta_destino = carpeta_destino / archivo["nombre"]
+
+        # Evitar sobrescribir: renombrar si existe
+        if ruta_destino.exists():
+            base = ruta_destino.stem
+            ext = ruta_destino.suffix
+            contador = 1
+            while ruta_destino.exists():
+                ruta_destino = carpeta_destino / f"{base}_{contador}{ext}"
+                contador += 1
+
+        try:
+            Path(archivo["ruta"]).rename(ruta_destino)
+            resultado["movidos"] += 1
+            resultado["detalles"].append(f"��� {archivo['nombre']} → {archivo['carpeta_destino']}/")
+        except Exception as e:
+            resultado["errores"] += 1
+            resultado["detalles"].append(f"��� {archivo['nombre']}: {e}")
+
+        if callback_progreso:
+            callback_progreso(i + 1, len(archivos))
+
+    return resultado
+
+
+def calcular_hash_archivo(ruta: str, algoritmo: str = "md5") -> str:
+    """Calcula hash de un archivo (streaming para archivos grandes)."""
+    hash_obj = hashlib.new(algoritmo)
+    with open(ruta, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            hash_obj.update(chunk)
+    return hash_obj.hexdigest()
+
+
+def encontrar_duplicados(carpeta_origen: str,
+                         callback_progreso: Optional[Callable[[int, int], None]] = None) -> dict:
+    """Busca archivos duplicados por contenido (hash MD5)."""
+    archivos = escanear_archivos(carpeta_origen)
+    hashes = {}
+    duplicados = []
+
+    for i, archivo in enumerate(archivos):
+        try:
+            hash_archivo = calcular_hash_archivo(archivo["ruta"])
+            if hash_archivo in hashes:
+                duplicados.append({
+                    "original": hashes[hash_archivo],
+                    "duplicado": archivo["ruta"],
+                    "hash": hash_archivo,
+                    "tamaño": archivo["tamaño"]
+                })
+            else:
+                hashes[hash_archivo] = archivo["ruta"]
+        except Exception:
+            pass  # Archivo no legible, saltar
+
+        if callback_progreso:
+            callback_progreso(i + 1, len(archivos))
+
+    return {
+        "total_archivos": len(archivos),
+        "duplicados_encontrados": len(duplicados),
+        "grupos_duplicados": duplicados
+    }
+
+
+# ============================================================
+# GUI - Interfaz gráfica con tkinter
+# ============================================================
+class FileOrganizerApp:
+    def __init__(self, root: tk.Tk):
+        self.root = root
+        self.root.title("Organizador de Archivos")
+        self.root.geometry("700x500")
+        self.carpeta_origen = ""
+        self.archivos_escaneados = []
+
+        self.crear_interfaz()
+
+    def crear_interfaz(self):
+        frame_principal = ttk.Frame(self.root, padding="10")
+        frame_principal.pack(fill=tk.BOTH, expand=True)
+
+        # Sección: Seleccionar carpeta
+        frame_carpeta = ttk.LabelFrame(frame_principal, text="Carpeta a organizar", padding="10")
+        frame_carpeta.pack(fill=tk.X, pady=(0, 10))
+
+        self.entry_carpeta = ttk.Entry(frame_carpeta)
+        self.entry_carpeta.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+
+        ttk.Button(frame_carpeta, text="Examinar", command=self.seleccionar_carpeta).pack(side=tk.LEFT)
+
+        # Sección: Acciones
+        frame_acciones = ttk.LabelFrame(frame_principal, text="Acciones", padding="10")
+        frame_acciones.pack(fill=tk.X, pady=(0, 10))
+
+        ttk.Button(frame_acciones, text="Escanear", command=self.escanear).pack(side=tk.LEFT, padx=5)
+        ttk.Button(frame_acciones, text="Organizar por tipo",
+                   command=lambda: self.ejecutar_accion("organizar")).pack(side=tk.LEFT, padx=5)
+        ttk.Button(frame_acciones, text="Buscar duplicados",
+                   command=lambda: self.ejecutar_accion("duplicados")).pack(side=tk.LEFT, padx=5)
+
+        # Sección: Vista previa / Log
+        frame_log = ttk.LabelFrame(frame_principal, text="Vista previa / Log", padding="10")
+        frame_log.pack(fill=tk.BOTH, expand=True)
+
+        self.text_log = scrolledtext.ScrolledText(frame_log, height=15, state=tk.DISABLED)
+        self.text_log.pack(fill=tk.BOTH, expand=True)
+
+        # Barra de progreso
+        self.progreso = ttk.Progressbar(frame_principal, mode="determinate")
+        self.progreso.pack(fill=tk.X, pady=(10, 0))
+        self.label_progreso = ttk.Label(frame_principal, text="")
+        self.label_progreso.pack()
+
+    def seleccionar_carpeta(self):
+        carpeta = filedialog.askdirectory()
+        if carpeta:
+            self.carpeta_origen = carpeta
+            self.entry_carpeta.delete(0, tk.END)
+            self.entry_carpeta.insert(0, carpeta)
+            self.log(f"Carpeta seleccionada: {carpeta}")
+
+    def escanear(self):
+        if not self.carpeta_origen:
+            messagebox.showwarning("Aviso", "Primero selecciona una carpeta")
+            return
+
+        self.log("Escaneando archivos...")
+        self.archivos_escaneados = escanear_archivos(self.carpeta_origen)
+
+        if not self.archivos_escaneados:
+            self.log("No se encontraron archivos en la carpeta.")
+            return
+
+        self.log(f"Encontrados {len(self.archivos_escaneados)} archivos:")
+        for arch in self.archivos_escaneados:
+            self.log(f"  {arch['nombre']} → {arch['carpeta_destino']}/")
+
+    def ejecutar_accion(self, accion: str):
+        if not self.archivos_escaneados:
+            messagebox.showwarning("Aviso", "Primero haz clic en 'Escanear'")
+            return
+
+        if accion == "organizar":
+            self.log("Iniciando organización...")
+            threading.Thread(target=self._organizar_thread, daemon=True).start()
+        elif accion == "duplicados":
+            self.log("Buscando duplicados...")
+            threading.Thread(target=self._duplicados_thread, daemon=True).start()
+
+    def _organizar_thread(self):
+        def actualizar_progreso(actual: int, total: int):
+            self.root.after(0, lambda: self._actualizar_progreso(actual, total, "Organizando"))
+
+        resultado = organizar_archivos(self.carpeta_origen, self.archivos_escaneados, actualizar_progreso)
+        self.root.after(0, lambda: self._mostrar_resultado_organizar(resultado))
+
+    def _duplicados_thread(self):
+        def actualizar_progreso(actual: int, total: int):
+            self.root.after(0, lambda: self._actualizar_progreso(actual, total, "Buscando duplicados"))
+
+        resultado = encontrar_duplicados(self.carpeta_origen, actualizar_progreso)
+        self.root.after(0, lambda: self._mostrar_resultado_duplicados(resultado))
+
+    def _actualizar_progreso(self, actual: int, total: int, texto: str):
+        self.progreso["maximum"] = total
+        self.progreso["value"] = actual
+        self.label_progreso.config(text=f"{texto}: {actual}/{total}")
+
+    def _mostrar_resultado_organizar(self, resultado: dict):
+        self.log("\n--- RESULTADO ---")
+        for detalle in resultado["detalles"]:
+            self.log(detalle)
+        self.log(f"\nResumen: {resultado['movidos']} movidos, {resultado['errores']} errores")
+        self.label_progreso.config(text="Completado")
+        messagebox.showinfo("Completado",
+                            f"Organización terminada.\nMovidos: {resultado['movidos']}\nErrores: {resultado['errores']}")
+
+    def _mostrar_resultado_duplicados(self, resultado: dict):
+        self.log("\n--- DUPLICADOS ENCONTRADOS ---")
+        if resultado["duplicados_encontrados"] == 0:
+            self.log("No se encontraron duplicados.")
+        else:
+            for dup in resultado["grupos_duplicados"]:
+                self.log(f"Duplicado: {dup['duplicado']}")
+                self.log(f"  Original: {dup['original']}")
+                self.log(f"  Tamaño: {dup['tamaño']} bytes")
+                self.log("")
+        self.label_progreso.config(text="Completado")
+        messagebox.showinfo("Completado",
+                            f"Búsqueda terminada.\nDuplicados: {resultado['duplicados_encontrados']}")
+
+    def log(self, mensaje: str):
+        self.text_log.config(state=tk.NORMAL)
+        self.text_log.insert(tk.END, mensaje + "\n")
+        self.text_log.see(tk.END)
+        self.text_log.config(state=tk.DISABLED)
+
+
+def main():
+    root = tk.Tk()
+    app = FileOrganizerApp(root)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,2 @@
+#!/bin/bash
+sudo masscan -p1-65535 "$1" --rate=1000

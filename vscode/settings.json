@@ -4,5 +4,15 @@
     "files.autoSave": "afterDelay",
     "cSpell.language": "en,es-ES",
     "python.defaultInterpreterPath": "",
-    "workbench.colorTheme": "Pink as Fox (blacker)"
+    "workbench.colorTheme": "Pink as Fox (blacker)",
+    "python.languageServer": "Default",
+    "explorer.confirmDelete": false,
+    "terminal.integrated.commandsToSkipShell": [
+        "kilo-code.new.agentManagerOpen",
+        "kilo-code.new.agentManager.showTerminal",
+        "kilo-code.new.agentManager.previousTerminal",
+        "kilo-code.new.agentManager.nextTerminal"
+    ],
+    "kilo-code.new.agentWorkStyle": "autonomous",
+    "kilo-code.new.showTaskTimeline": false
 }
