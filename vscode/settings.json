@@ -14,5 +14,6 @@
         "kilo-code.new.agentManager.nextTerminal"
     ],
     "kilo-code.new.agentWorkStyle": "autonomous",
-    "kilo-code.new.showTaskTimeline": false
+    "kilo-code.new.showTaskTimeline": false,
+    "makefile.configureOnOpen": true
 }

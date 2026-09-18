@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Atajo rápido para el Gestor de Agent Skills de Antigravity
+# ==============================================================================
+set -Eeuo pipefail
+DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+SCRIPT="${DIR}/install-antigravity-skills.sh"
+
+if [[ $# -eq 0 ]]; then
+    exec "${SCRIPT}" --menu
+fi
+
+show_skills_help() {
+    cat <<'EOF'
+╔══════════════════════════════════════════════════════════════╗
+║           GESTOR DE AGENT SKILLS (COMANDOS FÁCILES)          ║
+╚══════════════════════════════════════════════════════════════╝
+
+¡No necesitas memorizar nada!
+
+1. Si no sabes qué poner, escribe SOLO:
+   skills
+   (Abre un menú interactivo en pantalla donde solo eliges 1, 2, 3...)
+
+2. O puedes poner una de estas palabras después de skills:
+   skills status          -> Ver qué skills tienes instaladas
+   skills install         -> Instalar las 42 skills de golpe
+   skills update          -> Actualizar repositorios y skills
+   skills uninstall-all   -> Desinstalar TODAS las skills (con backup)
+   skills uninstall <nom> -> Desinstalar una skill específica
+   skills scan            -> Escanear seguridad de todos los repos
+   skills list            -> Ver el catálogo con descripción de cada una
+   skills dry-run         -> Simular qué pasaría sin tocar archivos
+   skills help            -> Ver esta ayuda
+EOF
+}
+
+case "$1" in
+    menu|-i|--menu|--interactive)
+        exec "${SCRIPT}" --menu
+        ;;
+    status|info|--status)
+        exec "${SCRIPT}" --status
+        ;;
+    install|--install)
+        exec "${SCRIPT}"
+        ;;
+    update|--update)
+        exec "${SCRIPT}" --update
+        ;;
+    list|--list)
+        exec "${SCRIPT}" --list
+        ;;
+    scan|security-scan|--security-scan)
+        exec "${SCRIPT}" --security-scan
+        ;;
+    dry-run|--dry-run)
+        exec "${SCRIPT}" --dry-run
+        ;;
+    uninstall-all|--uninstall-all)
+        exec "${SCRIPT}" --uninstall-all
+        ;;
+    uninstall|--uninstall)
+        shift
+        if [[ $# -eq 0 ]]; then
+            echo "Error: Debes indicar qué skill desinstalar. Ejemplo: ./skills uninstall playwright-skill"
+            exit 1
+        fi
+        exec "${SCRIPT}" --uninstall "$1"
+        ;;
+    help|-h|--help)
+        show_skills_help
+        exit 0
+        ;;
+    *)
+        echo "Opción no reconocida: '$1'"
+        echo ""
+        show_skills_help
+        exit 1
+        ;;
+esac

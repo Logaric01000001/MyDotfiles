@@ -32,7 +32,7 @@ source "${ZINIT_HOME}/zinit.zsh"
 ############################################
 # Add in Starship
 ############################################
-export STARSHIP_CONFIG="/home/shell-ninja/.zsh/starship/starship-simple.toml"
+export STARSHIP_CONFIG="$HOME/.zsh/starship/starship-simple.toml"
 eval "$(starship init zsh)"
 
 ############################################
@@ -180,18 +180,17 @@ source ~/.zsh/functions.zsh
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-export PATH="$HOME/.local/bin:$PATH"
-eval "$(~/.linuxbrew/Homebrew/bin/brew shellenv)"
 
-# NPM global bin (added by Qwen Code installer)
+# Linuxbrew environment (si está instalado)
+if [ -x "$HOME/.linuxbrew/Homebrew/bin/brew" ]; then
+    eval "$("$HOME/.linuxbrew/Homebrew/bin/brew" shellenv)"
+elif [ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+
+# Configuración limpia de PATH
 export PATH="$HOME/.npm-global/bin:$PATH"
-export PATH="$HOME/.local/bin:$PATH"
-
-
-# Added by Antigravity CLI installer
-export PATH="/home/logaric/.local/bin:$PATH"
-
-export PATH=$PATH:/home/logaric/.spicetify
+export PATH="$HOME/.spicetify:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 
 # Segundo Cerebro

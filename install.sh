@@ -172,6 +172,8 @@ mkdir -p "$HOME/.config/fastfetch"
 mkdir -p "$HOME/.config/Kvantum"
 mkdir -p "$HOME/.config/VSCodium/User"
 mkdir -p "$HOME/.config/Antigravity IDE/User"
+mkdir -p "$HOME/.gemini/config/skills"
+mkdir -p "$HOME/.gemini/antigravity"
 mkdir -p "$HOME/.zsh"
 mkdir -p "$HOME/.local/bin"
 mkdir -p "$HOME/Imágenes/Capturas"
@@ -308,6 +310,19 @@ if [ -d "$DOTFILES_DIR/scripts" ]; then
     done
 fi
 
+# Gestor de Agent Skills para Google Antigravity IDE
+if [ -d "$DOTFILES_DIR/skills" ]; then
+    echo -e "\n${BLUE}Configurando Gestor de Agent Skills (Google Antigravity)...${NC}"
+    chmod +x "$DOTFILES_DIR/skills/skills" "$DOTFILES_DIR/skills/install-antigravity-skills.sh" 2>/dev/null || true
+    ln -sf "$DOTFILES_DIR/skills/skills" "$HOME/.local/bin/skills"
+    echo -e "   ${GREEN}✔ Comando 'skills' vinculado:${NC} ~/.local/bin/skills → $DOTFILES_DIR/skills/skills"
+    
+    # Enlace de compatibilidad entre ~/.gemini/config/skills y ~/.gemini/antigravity/skills
+    if [ ! -e "$HOME/.gemini/antigravity/skills" ]; then
+        ln -sf "$HOME/.gemini/config/skills" "$HOME/.gemini/antigravity/skills" 2>/dev/null || true
+    fi
+fi
+
 # Servicio systemd para restaurar Noctalia tras suspender/hibernar
 if [ -f "$DOTFILES_DIR/systemd/noctalia-resume.service" ]; then
     echo -e "\n${BLUE}Configurando servicio de reanudación de Noctalia...${NC}"
@@ -388,7 +403,7 @@ echo -e "${BOLD}Resumen de atajos configurados:${NC}"
 echo -e "  • ${CYAN}Mod + Shift + H${NC}    → Guía interactiva de atajos en pantalla (Help)"
 echo -e "  • ${CYAN}Mod + Enter${NC}        → Terminal (Kitty)"
 echo -e "  • ${CYAN}Mod + E${NC}            → Navegador de Archivos (Dolphin - Fondo Sólido Opaco)"
-echo -e "  • ${CYAN}Mod + C${NC}            → Editor de código (VScodium)"
+echo -e "  • ${CYAN}Mod + C${NC}            → Editor de código (Antigravity IDE / VScodium)"
 echo -e "  • ${CYAN}Mod + S${NC}            → Menú de Energía (Apagar, Reiniciar, Bloquear, Logout)"
 echo -e "  • ${CYAN}Mod + D / Espacio${NC}  → Lanzador de aplicaciones (Rofi minimalista)"
 echo -e "  • ${CYAN}Mod + B${NC}            → Navegador Web (Zen Browser)"
@@ -397,6 +412,10 @@ echo -e "  • ${CYAN}Mod + A${NC}            → Panel de Ajustes y Barra (Noct
 echo -e "  • ${CYAN}Mod + L${NC}            → Bloquear pantalla (Hyprlock + Auto-restaurar Noctalia)"
 echo -e "  • ${CYAN}Mod + F${NC}            → Maximizar ventana"
 echo -e "  • ${CYAN}Mod + Q${NC}            → Cerrar ventana activa"
+echo ""
+echo -e "${BOLD}Utilidades de terminal integradas:${NC}"
+echo -e "  • ${CYAN}skills${NC}                 → Gestor interactivo de 42 Agent Skills de Antigravity"
+echo -e "  • ${CYAN}up${NC}                     → Actualizador Inteligente de Sistema (sysupdate.sh)"
 echo ""
 echo -e "${GREEN}¡Todo listo! Tu entorno dotfiles está 100% instalado, protegido y sin transparencias molestas.${NC}"
 echo ""

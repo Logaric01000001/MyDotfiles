@@ -255,7 +255,7 @@ binds {
     // • Para ejecutar un script:  Mod+Letra { spawn "bash" "/ruta/script.sh"; }
     //
     // EJEMPLOS LISTOS PARA DESCOMENTAR / COPIAR:
-    // Mod+C       { spawn "code"; }             // Abrir VS Code
+    // Mod+C       { spawn "antigravity-ide"; }   // Abrir Antigravity IDE / VS Code
     // Mod+M       { spawn "spotify"; }          // Abrir Spotify
     // Mod+T       { spawn "telegram-desktop"; } // Abrir Telegram
     // Mod+Shift+N { spawn "obsidian"; }         // Abrir Obsidian
@@ -287,7 +287,7 @@ binds {
     // Lanzadores de Aplicaciones y Herramientas Predeterminadas
     // -------------------------------------------------------------------------
     Mod+Return { spawn "kitty"; } // Terminal (Kitty)
-    Mod+C { spawn "bash" "-c" "codium || vscodium || code"; } // VScodium / VS Code
+    Mod+C { spawn "bash" "-c" "antigravity-ide || codium || vscodium || code"; } // Antigravity IDE / VScodium / VS Code
 
     // Menú de aplicaciones (Rofi)
     Mod+D     { spawn "rofi" "-show" "drun"; } // Lanzador de aplicaciones
