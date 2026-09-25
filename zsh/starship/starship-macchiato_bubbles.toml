@@ -1,4 +1,7 @@
 # 3. Macchiato Bubbles
+scan_timeout = 1000
+command_timeout = 1000
+
 format = """
 $os\
 $directory\

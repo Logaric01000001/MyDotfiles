@@ -1,4 +1,7 @@
 # 5. Arch Purist Two-Liner
+scan_timeout = 1000
+command_timeout = 1000
+
 format = """
 [╭─](bold blue) $os$directory\
 $fill\

@@ -362,18 +362,26 @@ if command -v zsh &>/dev/null && [ "$SHELL" != "$(which zsh)" ]; then
     chsh -s "$(which zsh)" "$USER" 2>/dev/null || true
 fi
 
-# Configuración optimizada de Bluetooth (prevención de desconexiones y ocultación de MACs aleatorias)
+# Configuración optimizada de Bluetooth (prevención de desconexiones y estabilidad)
 echo -e "\n${BLUE}Configurando Bluetooth...${NC}"
 if [ -f /etc/bluetooth/main.conf ] && command -v sudo &>/dev/null; then
-    sudo sed -i 's/#ControllerMode = dual/ControllerMode = bredr/' /etc/bluetooth/main.conf 2>/dev/null || true
-    sudo sed -i 's/#FastConnectable = false/FastConnectable = true/' /etc/bluetooth/main.conf 2>/dev/null || true
+    sudo sed -i -E 's/^[#[:space:]]*ControllerMode[[:space:]]*=.*/ControllerMode = dual/' /etc/bluetooth/main.conf 2>/dev/null || true
+    sudo sed -i -E 's/^[#[:space:]]*FastConnectable[[:space:]]*=.*/FastConnectable = false/' /etc/bluetooth/main.conf 2>/dev/null || true
     sudo sed -i 's/#AutoEnable=true/AutoEnable=true/' /etc/bluetooth/main.conf 2>/dev/null || true
     sudo sed -i 's/#NameResolving = true/NameResolving = true/' /etc/bluetooth/main.conf 2>/dev/null || true
     sudo sed -i 's/#RemoteNameRequestRetryDelay = 300/RemoteNameRequestRetryDelay = 5/' /etc/bluetooth/main.conf 2>/dev/null || true
     
+    sudo sed -i -E 's/^[#[:space:]]*FilterDiscoverable[[:space:]]*=.*/FilterDiscoverable = true/' /etc/bluetooth/main.conf 2>/dev/null || true
+    sudo sed -i -E 's/^[#[:space:]]*TemporaryTimeout[[:space:]]*=.*/TemporaryTimeout = 10/' /etc/bluetooth/main.conf 2>/dev/null || true
+    
     echo "options btusb enable_autosuspend=n" | sudo tee /etc/modprobe.d/btusb.conf >/dev/null 2>/dev/null || true
     sudo systemctl restart bluetooth 2>/dev/null || true
     echo -e "   ${GREEN}✔ Bluetooth optimizado correctamente.${NC}"
+fi
+
+# Desactivar cambio agresivo a perfil de micrófono en WirePlumber (evita que audífonos se desconecten)
+if command -v wpctl &>/dev/null; then
+    wpctl settings --save bluetooth.autoswitch-to-headset-profile false 2>/dev/null || true
 fi
 
 # -----------------------------------------------------------------------------
