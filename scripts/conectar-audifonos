@@ -1,41 +1,21 @@
 #!/usr/bin/env bash
-# =============================================================================
-#   Conector Automático de Audífonos Bluetooth (Arch Linux / WirePlumber)
-# =============================================================================
-
+# empareja los audifonos desde cero (maxell / dynamic / mt)
 set -e
 
-BOLD='\033[1m'
-CYAN='\033[0;36m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-NC='\033[0m'
-
 clear 2>/dev/null || true
-echo -e "${CYAN}╔═════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║           CONECTOR AUTOMÁTICO DE AUDÍFONOS BLUETOOTH           ║${NC}"
-echo -e "${CYAN}╚═════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-echo -e "${YELLOW}${BOLD}PASOS PREVIOS IMPORTANTES:${NC}"
-echo -e "  1. Desactiva el Bluetooth de tu teléfono (para que no robe la conexión)."
-echo -e "  2. Con tus audífonos APAGADOS, mantén presionado el botón de encendido"
-echo -e "     durante ${BOLD}5 a 7 segundos sin soltarlo${NC}."
-echo -e "  3. Suéltalo cuando la luz parpadee rápidamente en ${RED}ROJO${NC} y ${BLUE}AZUL${NC} alternado"
-echo -e "     (o escuches la voz decir 'Pairing' / 'Emparejando')."
-echo ""
-read -rp "Presiona [Enter] cuando la luz esté parpadeando en rojo/azul..."
+echo "Antes:"
+echo "  - apaga el bluetooth del celular"
+echo "  - con los audifonos apagados, deja presionado el boton 5-7 seg"
+echo "    hasta que parpadee rojo/azul"
+echo
+read -rp "Enter cuando este parpadeando... "
 
-echo -e "\n${BLUE}Buscando tus audífonos en modo vinculación...${NC}"
-
-# Activar escaneo filtrado solo para audio clásico (BR/EDR) en segundo plano
+echo "buscando..."
 bluetoothctl scan bredr >/dev/null 2>&1 &
 SCAN_PID=$!
 
 MAC=""
 NAME=""
-
 for i in {1..20}; do
     FOUND=$(bluetoothctl devices | grep -i -E "MAXELL|DYNAMIC|MT" | head -n1 || true)
     if [ -n "$FOUND" ]; then
@@ -43,7 +23,7 @@ for i in {1..20}; do
         NAME=$(echo "$FOUND" | cut -d' ' -f3-)
         break
     fi
-    echo -ne " Buscando... ($i/20)\r"
+    echo -ne " $i/20\r"
     sleep 1
 done
 
@@ -51,36 +31,24 @@ kill $SCAN_PID 2>/dev/null || true
 wait $SCAN_PID 2>/dev/null || true
 
 if [ -z "$MAC" ]; then
-    echo -e "\n${RED}❌ No se encontraron los audífonos.${NC}"
-    echo -e "Asegúrate de que la luz parpadee en rojo/azul y vuelve a ejecutar el comando."
+    echo "no los encontre, revisa que esten en modo pairing"
     exit 1
 fi
 
-echo -e "\n${GREEN}✔ Audífonos detectados:${NC} ${BOLD}$NAME${NC} ($MAC)"
-echo -e "${BLUE}Limpiando claves anteriores y creando vinculación nueva...${NC}"
+echo "encontrados: $NAME ($MAC)"
 
-# Limpiar cualquier residuo de clave desincronizada
+# borrar la clave vieja, si no da Permission denied
 bluetoothctl remove "$MAC" >/dev/null 2>&1 || true
 sleep 1
 
-# Emparejar desde cero
-echo -e "${BLUE}Emparejando...${NC}"
 bluetoothctl pair "$MAC"
 bluetoothctl trust "$MAC"
-
-echo -e "${BLUE}Conectando canal de audio A2DP...${NC}"
 bluetoothctl connect "$MAC"
 sleep 2
 
 if bluetoothctl info "$MAC" 2>/dev/null | grep -q "Connected: yes"; then
-    echo ""
-    echo -e "${GREEN}╔═════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║           🎉 ¡AUDÍFONOS CONECTADOS Y FUNCIONANDO!             ║${NC}"
-    echo -e "${GREEN}╚═════════════════════════════════════════════════════════════════╝${NC}"
-    echo -e "${GREEN}✔ Clave sincronizada correctamente (sin Permission denied).${NC}"
-    echo -e "${GREEN}✔ Audio estéreo de alta calidad listo para escuchar música/videos.${NC}"
-    echo ""
+    echo "conectados"
 else
-    echo -e "\n${YELLOW}Reintentando conexión directa...${NC}"
+    echo "reintentando..."
     bluetoothctl connect "$MAC"
 fi

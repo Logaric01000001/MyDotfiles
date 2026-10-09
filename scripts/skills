@@ -1,21 +1,16 @@
 #!/usr/bin/env bash
-# ==============================================================================
-# Lanzador del Gestor de Agent Skills de Antigravity
-# ==============================================================================
 set -Eeuo pipefail
 
 REAL_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
 REAL_DIR="$(cd "$(dirname "${REAL_PATH}")" && pwd)"
 
-if [[ -f "${REAL_DIR}/install-antigravity-skills.sh" ]]; then
-    exec "${REAL_DIR}/install-antigravity-skills.sh" "$@"
-elif [[ -f "${REAL_DIR}/../skills/skills" ]]; then
-    exec "${REAL_DIR}/../skills/skills" "$@"
-elif [[ -f "$HOME/MyDotfiles/skills/skills" ]]; then
-    exec "$HOME/MyDotfiles/skills/skills" "$@"
-elif [[ -f "$HOME/Proyectos/SkillsAuto/skills" ]]; then
-    exec "$HOME/Proyectos/SkillsAuto/skills" "$@"
-else
-    echo "Error: No se encontró el motor de Agent Skills en \$HOME/MyDotfiles/skills/" >&2
-    exit 1
-fi
+for c in \
+    "${REAL_DIR}/install-antigravity-skills.sh" \
+    "${REAL_DIR}/../skills/skills" \
+    "$HOME/MyDotfiles/skills/skills" \
+    "$HOME/Proyectos/SkillsAuto/skills"; do
+    if [[ -f "$c" ]]; then exec "$c" "$@"; fi
+done
+
+echo "no encuentro skills en ~/MyDotfiles/skills/" >&2
+exit 1

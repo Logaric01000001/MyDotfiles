@@ -1,114 +1,796 @@
 #!/usr/bin/env python3
-# Este script es para iniciar mis maquinas persistente con docker
+"""DockerLab — administrador de contenedores desde la terminal (stdlib).
 
+Necesita Docker CLI y acceso autorizado al daemon. No requiere pip.
+Uso: d  (o dockerlab)
+"""
+
+from __future__ import annotations
+
+import ipaddress
+import json
 import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+from datetime import datetime
+from typing import Any
 
-def volver_al_menu():
-        print("")
-        print("0.Volver al Menu")
-        print("8.Cerrar Programa")
-        print("")
-        re = int(input("Numero: "))
-        
-        if re == 0:
-            return 0
-            
-        elif re == 8:
-            return 8
-
-        else:
-            print("Coloque 0 o 8")
+APP = "DockerLab"
+VERSION = "2.0"
+BACKUP_DIR = Path(os.environ.get("DOCKERLAB_BACKUP_DIR", Path.home() / "dockerlab_backups"))
+COLOR = sys.stdout.isatty() and "NO_COLOR" not in os.environ
 
 
+class C:
+    RESET = "\033[0m" if COLOR else ""
+    BOLD = "\033[1m" if COLOR else ""
+    DIM = "\033[2m" if COLOR else ""
+    CYAN = "\033[36m" if COLOR else ""
+    GREEN = "\033[32m" if COLOR else ""
+    YELLOW = "\033[33m" if COLOR else ""
+    RED = "\033[31m" if COLOR else ""
+    BLUE = "\033[34m" if COLOR else ""
 
-while True:
+
+class DockerError(Exception):
+    pass
+
+
+class InputError(Exception):
+    pass
+
+
+class Cancelled(Exception):
+    """El usuario canceló un diálogo sin error."""
+    pass
+
+
+def clear() -> None:
+    if sys.stdout.isatty() and os.environ.get("TERM", "dumb") != "dumb":
+        print("\033[2J\033[H", end="")
+
+
+def heading(title: str, subtitle: str = "") -> None:
+    print(f"\n{C.BOLD}{C.CYAN}  {title}{C.RESET}")
+    if subtitle:
+        print(f"  {C.DIM}{subtitle}{C.RESET}")
+    print(f"  {'─' * min(64, shutil.get_terminal_size((80, 24)).columns - 5)}")
+
+
+def ok(message: str) -> None:
+    print(f"\n  {C.GREEN}✓ {message}{C.RESET}")
+
+
+def warn(message: str) -> None:
+    print(f"\n  {C.YELLOW}! {message}{C.RESET}")
+
+
+def error(message: str) -> None:
+    print(f"\n  {C.RED}✗ {message}{C.RESET}")
+
+
+def prompt(label: str, default: str | None = None) -> str:
+    suffix = f" [{default}]" if default is not None else ""
+    value = input(f"  {label}{suffix}: ").strip()
+    return value if value else (default or "")
+
+
+def pause() -> None:
+    input(f"\n  {C.DIM}Pulsa Enter para continuar...{C.RESET}")
+
+
+def confirm(message: str, *, exact: str | None = None) -> bool:
+    if exact:
+        return prompt(f"{message}. Escribe {exact} para confirmar") == exact
+    return prompt(message + " (s/N)").lower() in {"s", "si", "sí"}
+
+
+def docker(args: list[str], *, stream: bool = False) -> str:
+    """Llama Docker sin shell y devuelve stdout (o muestra la salida en vivo)."""
     try:
-        print("")
-        print("Este proyecto es para facilitar la entrada a las maquinas persistentes de Docker")
-        print("Escoja una opcion:")
-        print("1.Listar Imagenes")
-        print("2.Listar Contenedores Persistente")
-        print("3.Descargar Imagen")
-        print("4.Crear Contenedor Persistente")
-        print("5.Entrar En Contenedor Persistente")
-        print("6.Eliminar Contenedor Persistente")
-        print("7.Eliminar Contenedor Base")
-        print("8.Exit/Salir")
-        print("")
-        opcion = int(input("Escoge una opcion: "))
-
-        if opcion == 1:
-            os.system('printf "\033c"')
-            print("")
-            print("Imagenes")
-            os.system("docker images")
-
-        elif opcion == 2:
-            os.system('printf "\033c"')
-            print("")
-            print("Contenedores Persistentes")
-            os.system("docker ps -a")
-
-        elif opcion == 3:
-            os.system('printf "\033c"')
-            print("")
-            print("Descargar Imagen")
-            nombre_descargar_imagen = input("Nombre de la Imagen: ")
-            print("Descargando...")
-            os.system(f"docker pull {nombre_descargar_imagen}")
-
-        elif opcion == 4:
-            os.system('printf "\033c"')
-            print("")
-            print("Crear Contenedor Persistente")
-            nombre_crear_contenedor = input("Nombre para tu nuevo contenedor: ")
-            imagen_crear_contenedor = input("Coloque el nombre de la imagen base (ej: alpine): ")
-            print("Creando...")
-            os.system(f"docker run --network host -dit --name {nombre_crear_contenedor} {imagen_crear_contenedor} sh")
-
-        elif opcion == 5:
-            os.system('printf "\033c"')
-            print("")
-            print("Entrar en Contenedor")
-            entrar_nombre = input("Coloque el nombre: ")
-            print("Entrando...")
-            os.system(f"docker start {entrar_nombre} ")
-            os.system(f'docker exec -it {entrar_nombre} sh -c "command -v zsh >/dev/null && exec zsh || exec sh"')
-            os.system(f"docker stop {entrar_nombre}")
-
-        elif opcion == 6:
-            os.system('printf "\033c"')
-            print("")
-            print("Eliminar Contenedor Persistente")
-            nombre_elimar_contenedor_persistente = input("Coloque el nombre: ")
-            print("Eliminando...")
-            os.system(f"docker rm -f {nombre_elimar_contenedor_persistente}")
-
-        elif opcion == 7:
-            os.system('printf "\033c"')
-            print("")
-            print("Eliminar Imagen")
-            nombre_eliminar_imagen = input("Coloque la Imagen: ")
-            print("Eliminando...")
-            os.system(f"docker rmi {nombre_eliminar_imagen}")
+        p = subprocess.run(
+            ["docker", *args],
+            check=False,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            stdout=None if stream else subprocess.PIPE,
+            stderr=None if stream else subprocess.PIPE,
+        )
+    except FileNotFoundError as exc:
+        raise DockerError("No se encontró el comando 'docker' en el PATH.") from exc
+    if p.returncode:
+        details = (p.stderr or "").strip() if not stream else ""
+        raise DockerError(details or f"Docker terminó con código {p.returncode}.")
+    return p.stdout or ""
 
 
-        resultado = volver_al_menu()
+def docker_exists(kind: str, name: str) -> bool:
+    """Existencia por código de salida; el daemon se verifica al iniciar."""
+    try:
+        p = subprocess.run(["docker", kind, "inspect", name],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                           check=False)
+    except FileNotFoundError:
+        return False
+    return p.returncode == 0
 
-        if resultado == 0:
-            os.system('printf "\033c"')
+
+def docker_json_lines(args: list[str]) -> list[dict[str, Any]]:
+    raw = docker([*args, "--format", "{{json .}}"])
+    try:
+        return [json.loads(line) for line in raw.splitlines() if line.strip()]
+    except json.JSONDecodeError as exc:
+        raise DockerError("No se pudo interpretar la salida de Docker.") from exc
+
+
+def containers() -> list[dict[str, Any]]:
+    return docker_json_lines(["ps", "-a"])
+
+
+def images() -> list[dict[str, Any]]:
+    return docker_json_lines(["image", "ls"])
+
+
+def volumes() -> list[dict[str, Any]]:
+    return docker_json_lines(["volume", "ls"])
+
+
+def networks() -> list[dict[str, Any]]:
+    return docker_json_lines(["network", "ls"])
+
+
+def inspect(name: str) -> dict[str, Any]:
+    data = json.loads(docker(["container", "inspect", name]))
+    if not data:
+        raise DockerError("Contenedor no encontrado.")
+    return data[0]
+
+
+def valid_name(name: str) -> bool:
+    return bool(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", name))
+
+
+def validate_name(name: str) -> str:
+    if not valid_name(name):
+        raise InputError("Nombre inválido: usa letras, números, _, - o .; empieza con letra o número.")
+    return name
+
+
+def validate_image(name: str) -> str:
+    if not name or name.startswith("-") or any(ch.isspace() for ch in name) or len(name) > 255:
+        raise InputError("Imagen inválida. Ejemplo: alpine:latest o ubuntu:24.04")
+    return name
+
+
+def validate_volume(name: str) -> str:
+    return validate_name(name)
+
+
+def validate_target(path: str) -> str:
+    if not path.startswith("/") or any(x in path for x in (":", ",", "\n", "\r", " ")):
+        raise InputError("La ruta dentro del contenedor debe ser absoluta y no contener espacios, : ni comas.")
+    return path
+
+
+def port_mapping(raw: str) -> str:
+    """8080:80 -> 127.0.0.1:8080:80/tcp (privado por defecto).
+
+    También: 0.0.0.0:8080:80, 100.64.0.5:8080:80/udp.
+    """
+    raw = raw.strip()
+    protocol = "tcp"
+    if "/" in raw:
+        raw, protocol = raw.rsplit("/", 1)
+    if protocol not in {"tcp", "udp"}:
+        raise InputError("El protocolo del puerto debe ser tcp o udp.")
+    parts = raw.split(":")
+    if len(parts) == 2:
+        host_ip = "127.0.0.1"
+        host_port, inner_port = parts
+    elif len(parts) == 3:
+        host_ip, host_port, inner_port = parts
+        try:
+            ipaddress.IPv4Address(host_ip)
+        except ipaddress.AddressValueError as exc:
+            raise InputError("IP de publicación inválida (usa IPv4).") from exc
+    else:
+        raise InputError("Puerto inválido. Usa 8080:80 o 0.0.0.0:8080:80.")
+    for p in (host_port, inner_port):
+        if not p.isascii() or not p.isdigit() or not 1 <= int(p) <= 65535:
+            raise InputError("Los puertos deben ser números entre 1 y 65535.")
+    return f"{host_ip}:{int(host_port)}:{int(inner_port)}/{protocol}"
+
+
+def parse_ports(raw: str) -> list[str]:
+    return [port_mapping(p) for p in raw.split(",") if p.strip()]
+
+
+def parse_mounts(raw: str) -> list[tuple[str, str]]:
+    result: list[tuple[str, str]] = []
+    for part in raw.split(","):
+        part = part.strip()
+        if not part:
             continue
+        if part.count(":") != 1:
+            raise InputError("Volumen inválido. Usa nombre:/ruta o varios separados por comas.")
+        name, target = part.split(":", 1)
+        result.append((validate_volume(name), validate_target(target)))
+    return result
 
-        elif resultado == 8:
-            os.system('printf "\033c"')
-            break
 
-        elif opcion == 8:
-            os.system('printf "\033c"')
-            print("")
-            print("BYE!")
-            break
+def parse_resources(memory: str, cpus: str) -> list[str]:
+    args: list[str] = []
+    if memory:
+        if not re.fullmatch(r"[1-9]\d*[kKmMgG]", memory):
+            raise InputError("Memoria inválida. Ejemplos: 256m, 1g, 2048m.")
+        args += ["--memory", memory]
+    if cpus:
+        try:
+            n = float(cpus)
+        except ValueError as exc:
+            raise InputError("CPU inválida. Ejemplo: 1.5") from exc
+        if not 0 < n <= 256 or n != n:
+            raise InputError("CPU debe ser mayor que 0 y menor o igual a 256.")
+        args += ["--cpus", str(n)]
+    return args
 
-    except ValueError:
-        print("")
-        print("Error: Debes ingresar un número entero válido del 1 al 8. Intenta de nuevo.")
+
+def build_run_command(*, name: str, image: str, laboratory: bool, restart: str,
+                      ports: list[str], mounts: list[tuple[str, str]],
+                      resource_args: list[str]) -> list[str]:
+    """Puro: fácil de inspeccionar y probar sin ejecutar Docker."""
+    args = ["run", "-d", "--name", validate_name(name), "--restart", restart,
+            "--network", "bridge", *resource_args]
+    for mapping in ports:
+        args += ["-p", mapping]
+    for volume, target in mounts:
+        args += ["--mount", f"type=volume,source={validate_volume(volume)},target={validate_target(target)}"]
+    if laboratory:
+        args += ["--workdir", "/workspace", "--entrypoint", "/bin/sh",
+                 validate_image(image), "-c", "while :; do sleep 3600; done"]
+    else:
+        args += [validate_image(image)]
+    return args
+
+
+def table(headers: list[str], rows: list[list[str]], widths: list[int]) -> None:
+    max_width = shutil.get_terminal_size((100, 24)).columns
+    # Asegura que las tablas no desborden terminales estrechas.
+    avail = max(35, max_width - 5 - 2 * (len(widths) - 1))
+    use = list(widths)
+    while sum(use) > avail and max(use) > 9:
+        index = max(range(len(use)), key=lambda i: use[i])
+        use[index] -= 1
+
+    def render(data: list[str]) -> str:
+        out = []
+        for i, value in enumerate(data):
+            value = str(value).replace("\n", " ")
+            limit = use[i]
+            if len(value) > limit:
+                value = value[:max(0, limit - 1)] + "…"
+            out.append(value.ljust(limit))
+        return "  ".join(out)
+
+    print(f"  {C.BOLD}{render(headers)}{C.RESET}")
+    print("  " + "  ".join("─" * n for n in use))
+    if not rows:
+        print(f"  {C.DIM}(sin resultados){C.RESET}")
+    for row in rows:
+        print("  " + render(row))
+
+
+def menu(title: str, choices: list[tuple[str, str]], *, back: str = "0") -> str:
+    clear()
+    heading(title)
+    for key, label in choices:
+        print(f"  {C.CYAN}{key:>2}{C.RESET}  {label}")
+    print()
+    return prompt("Elige una opción")
+
+
+def require_container() -> str:
+    cs = sorted(containers(), key=lambda item: item.get("Names", "").lower())
+    if not cs:
+        raise InputError("Todavía no tienes contenedores.")
+    print()
+    table(["#", "CONTENEDOR", "ESTADO", "IMAGEN"],
+          [[str(index), c.get("Names", ""), c.get("Status", ""), c.get("Image", "")]
+           for index, c in enumerate(cs, 1)], [3, 24, 22, 28])
+    selected = prompt("Número o nombre (Enter para cancelar)")
+    if not selected:
+        raise Cancelled()
+    if selected.isdecimal() and 1 <= int(selected) <= len(cs):
+        return str(cs[int(selected) - 1]["Names"])
+    name = validate_name(selected)
+    if not docker_exists("container", name):
+        raise InputError(f"No existe el contenedor '{name}'.")
+    return name
+
+
+def dashboard() -> None:
+    clear()
+    heading(f"{APP}  /  v{VERSION}", "Panel de administración · Docker Engine")
+    cs = containers()
+    ims = images()
+    vs = volumes()
+    active = sum(1 for c in cs if c.get("State") == "running")
+    print(f"  {C.GREEN}● Docker conectado{C.RESET}")
+    print(f"  {C.BOLD}{active}{C.RESET} activos   {len(cs)} contenedores   {len(ims)} imágenes   {len(vs)} volúmenes\n")
+    table(["CONTENEDOR", "IMAGEN", "ESTADO", "PUERTOS"],
+          [[c.get("Names", ""), c.get("Image", ""), c.get("Status", ""),
+            c.get("Ports", "") or "—"] for c in cs[:8]],
+          [23, 23, 22, 27])
+    if len(cs) > 8:
+        print(f"  {C.DIM}… y {len(cs) - 8} contenedores más{C.RESET}")
+    print()
+
+
+def list_containers() -> None:
+    heading("Todos los contenedores")
+    cs = containers()
+    table(["NOMBRE", "IMAGEN", "ESTADO", "PUERTOS", "ID"],
+          [[c.get("Names", ""), c.get("Image", ""), c.get("Status", ""),
+            c.get("Ports", "") or "—", c.get("ID", "")[:12]] for c in cs],
+          [24, 23, 23, 23, 12])
+
+
+def list_images() -> None:
+    heading("Imágenes locales")
+    table(["REPOSITORIO", "TAG", "TAMAÑO", "ID"],
+          [[i.get("Repository", ""), i.get("Tag", ""), i.get("Size", ""),
+            i.get("ID", "")[:12]] for i in images()],
+          [36, 17, 12, 12])
+
+
+def choose_restart() -> str:
+    print("\n  Reinicio: [1] solo manual  [2] al reiniciar servidor  [3] siempre")
+    selection = prompt("Política de reinicio", "2")
+    mapping = {"1": "no", "2": "unless-stopped", "3": "always"}
+    if selection not in mapping:
+        raise InputError("Política de reinicio no válida.")
+    return mapping[selection]
+
+
+def create_container() -> None:
+    heading("Crear contenedor", "Laboratorio persistente o servicio con entrada original")
+    print("  1  Laboratorio: shell disponible y datos guardados en /workspace")
+    print("  2  Servicio: ejecuta la aplicación normal de la imagen")
+    mode = prompt("Tipo", "1")
+    if mode not in {"1", "2"}:
+        raise InputError("Selecciona 1 o 2.")
+    laboratory = mode == "1"
+    name = validate_name(prompt("Nombre nuevo"))
+    if docker_exists("container", name):
+        raise InputError(f"Ya existe un contenedor con el nombre '{name}'.")
+    image = validate_image(prompt("Imagen", "alpine:latest" if laboratory else "nginx:alpine"))
+    restart = choose_restart()
+
+    mounts: list[tuple[str, str]] = []
+    if laboratory:
+        volume = validate_volume("labdata_" + name)
+        if docker_exists("volume", volume):
+            warn(f"Ya existe el volumen '{volume}' y se reutilizarán sus datos.")
+            if not confirm("¿Reutilizar ese volumen?"):
+                return
+        mounts.append((volume, "/workspace"))
+        print(f"\n  {C.GREEN}Datos persistentes:{C.RESET} {volume} → /workspace")
+    else:
+        raw = prompt("Volúmenes (ej: webdata:/var/lib/app, o vacío)")
+        mounts = parse_mounts(raw)
+
+    print("\n  Puertos: 8080:80 = solo esta máquina; 0.0.0.0:8080:80 = red externa")
+    raw_ports = prompt("Puertos, separados por comas (o vacío)")
+    ports = parse_ports(raw_ports)
+    if any(x.startswith("0.0.0.0:") for x in ports):
+        warn("Publicar en 0.0.0.0 puede exponer el servicio a otras redes.")
+    memory = prompt("Límite de RAM (ej: 512m, Enter = sin límite)")
+    cpus = prompt("Límite CPU (ej: 1.5, Enter = sin límite)")
+    resource_args = parse_resources(memory, cpus)
+    args = build_run_command(name=name, image=image, laboratory=laboratory,
+                             restart=restart, ports=ports, mounts=mounts,
+                             resource_args=resource_args)
+
+    print(f"\n  Nombre: {name}  |  Imagen: {image}")
+    print(f"  Reinicio: {restart}  |  Puertos: {', '.join(ports) or 'ninguno'}")
+    print(f"  Volúmenes: {', '.join(a + ':' + b for a, b in mounts) or 'ninguno'}")
+    if not confirm("¿Crear y arrancar el contenedor?"):
+        warn("Creación cancelada.")
+        return
+    cid = docker(args).strip()
+    ok(f"Contenedor creado: {name} ({cid[:12]})")
+    if laboratory:
+        print("  Todo lo guardado dentro de /workspace persistirá en el volumen.")
+        print("  Los cambios en otros directorios se pierden si eliminas el contenedor.")
+    else:
+        print("  Verifica con el menú de logs que el servicio haya arrancado correctamente.")
+
+
+def pull_image() -> None:
+    heading("Descargar imagen")
+    name = validate_image(prompt("Imagen (ej: debian:stable-slim)"))
+    print("\n  Descargando desde el registro configurado...")
+    docker(["pull", name], stream=True)
+    ok(f"Descarga terminada: {name}")
+
+
+def build_image() -> None:
+    heading("Construir imagen desde Dockerfile")
+    directory = Path(prompt("Directorio del proyecto", ".")).expanduser().resolve()
+    if not directory.is_dir() or not (directory / "Dockerfile").is_file():
+        raise InputError("El directorio debe contener un archivo llamado Dockerfile.")
+    tag = validate_image(prompt("Nombre:etiqueta", "mi-imagen:latest"))
+    docker(["build", "-t", tag, str(directory)], stream=True)
+    ok(f"Imagen construida: {tag}")
+
+
+def remove_image() -> None:
+    list_images()
+    image = validate_image(prompt("Imagen/ID a eliminar"))
+    if confirm(f"¿Eliminar '{image}'?", exact="ELIMINAR"):
+        docker(["image", "rm", image], stream=True)
+        ok("Imagen eliminada.")
+
+
+def start_container() -> None:
+    name = require_container()
+    docker(["start", name])
+    ok(f"{name} iniciado.")
+
+
+def stop_container() -> None:
+    name = require_container()
+    if confirm(f"¿Detener '{name}'?"):
+        docker(["stop", "--time", "10", name])
+        ok(f"{name} detenido. Los datos del volumen se conservan.")
+
+
+def restart_container() -> None:
+    name = require_container()
+    docker(["restart", name])
+    ok(f"{name} reiniciado.")
+
+
+def shell_container() -> None:
+    heading("Entrar a un contenedor")
+    name = require_container()
+    state = inspect(name).get("State", {}).get("Running", False)
+    if not state:
+        if not confirm(f"'{name}' está detenido. ¿Iniciarlo?"):
+            return
+        docker(["start", name])
+    print(f"\n  Entrando en {name}. Escribe 'exit' para regresar al panel.")
+    print("  Salir de la shell NO detiene el contenedor.\n")
+    tty = ["-it"] if sys.stdin.isatty() and sys.stdout.isatty() else ["-i"]
+    # Prioriza shells interactivas instaladas, con sh como intérprete POSIX base.
+    inner = "if command -v zsh >/dev/null 2>&1; then exec zsh; elif command -v bash >/dev/null 2>&1; then exec bash; else exec sh; fi"
+    docker(["exec", *tty, name, "sh", "-c", inner], stream=True)
+    ok("Sesión finalizada. El contenedor sigue ejecutándose.")
+
+
+def logs_container() -> None:
+    heading("Ver logs")
+    name = require_container()
+    raw = prompt("Últimas líneas", "100")
+    if not raw.isdecimal() or not 1 <= int(raw) <= 10000:
+        raise InputError("Indica entre 1 y 10000 líneas.")
+    follow = confirm("¿Seguir logs en vivo (Ctrl+C para salir)?")
+    args = ["logs", "--tail", raw, "--timestamps"]
+    if follow:
+        args.append("--follow")
+    print()
+    docker([*args, name], stream=True)
+
+
+def stats_container() -> None:
+    heading("Uso de recursos (instantánea)")
+    name = prompt("Contenedor (vacío = todos)")
+    if name:
+        validate_name(name)
+    args = ["stats", "--no-stream", "--format",
+            "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.PIDs}}"]
+    if name:
+        args.append(name)
+    docker(args, stream=True)
+
+
+def inspect_container() -> None:
+    heading("Detalles del contenedor")
+    name = require_container()
+    data = inspect(name)
+    state = data.get("State") or {}
+    config = data.get("HostConfig") or {}
+    ports = (data.get("NetworkSettings") or {}).get("Ports") or {}
+    mounts = data.get("Mounts") or []
+    fields = [
+        ("Nombre", data.get("Name", "").lstrip("/")),
+        ("ID", data.get("Id", "")[:12]),
+        ("Imagen", (data.get("Config") or {}).get("Image", "?")),
+        ("Estado", state.get("Status", "?")),
+        ("Reinicio", (config.get("RestartPolicy") or {}).get("Name", "no")),
+        ("Red", config.get("NetworkMode", "?")),
+        ("Creado", data.get("Created", "?")),
+    ]
+    for title, value in fields:
+        print(f"  {title:<12}: {value}")
+    print("\n  Montajes:")
+    for m in mounts:
+        print(f"    {m.get('Type', '?')}  {m.get('Name') or m.get('Source', '?')} -> {m.get('Destination', '?')}")
+    if not mounts:
+        print("    ninguno")
+    print("  Puertos:")
+    for key, bindings in ports.items():
+        if bindings:
+            for binding in bindings:
+                print(f"    {binding.get('HostIp', '?')}:{binding.get('HostPort', '?')} -> {key}")
+        else:
+            print(f"    {key} (no publicado)")
+    if not ports:
+        print("    ninguno")
+
+
+def remove_container() -> None:
+    heading("Eliminar contenedor (acción destructiva)")
+    name = require_container()
+    data = inspect(name)
+    mounts = data.get("Mounts") or []
+    print("\n  Se perderán los cambios guardados solamente en la capa del contenedor.")
+    print("  Los volúmenes nombrados no se eliminan automáticamente.")
+    for m in mounts:
+        if m.get("Type") == "volume":
+            print(f"  Volumen conservado: {m.get('Name', '?')} -> {m.get('Destination', '?')}")
+    if not confirm(f"¿Eliminar '{name}'?", exact=name):
+        warn("Eliminación cancelada.")
+        return
+    if data.get("State", {}).get("Running"):
+        docker(["stop", "--time", "10", name])
+    docker(["rm", name])
+    ok(f"'{name}' eliminado. Los volúmenes nombrados siguen intactos.")
+
+
+def workspace_volume(name: str) -> str:
+    data = inspect(name)
+    for mount in data.get("Mounts") or []:
+        if mount.get("Destination") == "/workspace" and mount.get("Type") == "volume":
+            return str(mount.get("Name", ""))
+    raise InputError("Este contenedor no tiene un volumen Docker montado en /workspace.")
+
+
+def backup_workspace() -> None:
+    heading("Copia de seguridad de /workspace")
+    name = require_container()
+    volume = workspace_volume(name)
+    warn("Se copiará solo /workspace. Para una copia consistente, detén antes las escrituras.")
+    if not confirm(f"¿Respaldar el volumen {volume}?"):
+        return
+    moment = datetime.now().strftime("%Y%m%d_%H%M%S")
+    destination = BACKUP_DIR / f"{name}_{moment}"
+    if destination.exists():
+        raise InputError("Ya existe una copia con ese nombre; inténtalo nuevamente.")
+    destination.mkdir(parents=True)
+    try:
+        docker(["cp", f"{name}:/workspace/.", str(destination)])
+    except (DockerError, KeyboardInterrupt):
+        # Nunca conservar un respaldo que podría estar incompleto.
+        shutil.rmtree(destination)
+        raise
+    ok(f"Respaldo creado: {destination}")
+
+
+def restore_workspace() -> None:
+    heading("Restaurar copia de seguridad")
+    name = require_container()
+    workspace_volume(name)
+    backup_folders = sorted((p for p in BACKUP_DIR.glob(f"{name}_*") if p.is_dir()), reverse=True) if BACKUP_DIR.is_dir() else []
+    if not backup_folders:
+        warn(f"No hay backups del contenedor '{name}' en {BACKUP_DIR}")
+        return
+    for n, folder in enumerate(backup_folders, start=1):
+        print(f"  {n:>2}  {folder.name}")
+    raw = prompt("Número a restaurar (vacío = cancelar)")
+    if not raw.isdecimal() or not 1 <= int(raw) <= len(backup_folders):
+        raise InputError("Selección inválida.")
+    selected = backup_folders[int(raw) - 1]
+    warn("La restauración sobrescribe archivos con el mismo nombre, pero no borra otros existentes.")
+    if not confirm(f"¿Restaurar en {name}:/workspace/?", exact="RESTAURAR"):
+        return
+    docker(["cp", str(selected) + "/.", f"{name}:/workspace/"])
+    ok(f"Restauración completada desde {selected.name}.")
+
+
+def copy_to_container() -> None:
+    heading("Copiar archivo o carpeta HACIA contenedor")
+    name = require_container()
+    raw = prompt("Ruta local del archivo/carpeta")
+    source = Path(raw).expanduser().resolve()
+    if not raw or not source.exists():
+        raise InputError("La ruta local no existe.")
+    target = prompt("Ruta destino del contenedor", "/workspace/")
+    if not target.startswith("/"):
+        raise InputError("El destino debe ser una ruta absoluta del contenedor.")
+    docker(["cp", str(source), f"{name}:{target}"])
+    ok("Copia completada.")
+
+
+def copy_from_container() -> None:
+    heading("Copiar archivo o carpeta DESDE contenedor")
+    name = require_container()
+    source = prompt("Ruta origen en el contenedor", "/workspace")
+    if not source.startswith("/"):
+        raise InputError("La ruta origen debe ser absoluta.")
+    raw = prompt("Carpeta destino local", ".")
+    destination = Path(raw).expanduser().resolve()
+    if not destination.is_dir():
+        raise InputError("La carpeta destino local no existe.")
+    docker(["cp", f"{name}:{source}", str(destination)])
+    ok("Copia completada.")
+
+
+def list_volumes() -> None:
+    heading("Volúmenes (los datos sobreviven al borrado del contenedor)")
+    table(["NOMBRE", "DRIVER"],
+          [[v.get("Name", ""), v.get("Driver", "")] for v in volumes()],
+          [54, 18])
+
+
+def remove_volume() -> None:
+    heading("Eliminar volumen (borra datos permanentemente)")
+    list_volumes()
+    name = validate_volume(prompt("Nombre exacto del volumen"))
+    if not docker_exists("volume", name):
+        raise InputError("No existe el volumen indicado.")
+    if confirm(f"ELIMINACIÓN PERMANENTE de '{name}'", exact=name):
+        docker(["volume", "rm", name])
+        ok(f"Volumen '{name}' eliminado.")
+
+
+def list_networks() -> None:
+    heading("Redes Docker")
+    table(["RED", "DRIVER", "SCOPE"],
+          [[n.get("Name", ""), n.get("Driver", ""), n.get("Scope", "")]
+           for n in networks()], [36, 20, 16])
+
+
+def disk_usage() -> None:
+    heading("Uso de disco de Docker")
+    docker(["system", "df"], stream=True)
+
+
+def safe_cleanup() -> None:
+    heading("Limpieza conservadora", "Solo imágenes colgantes (dangling); no elimina volúmenes")
+    disk_usage()
+    print("\n  No se borrarán contenedores, imágenes etiquetadas ni volúmenes.")
+    if confirm("¿Limpiar imágenes sin etiqueta que no estén en uso?", exact="LIMPIAR"):
+        docker(["image", "prune", "--force"], stream=True)
+        ok("Limpieza finalizada.")
+
+
+def containers_menu() -> None:
+    actions = {
+        "1": list_containers, "2": start_container, "3": stop_container,
+        "4": restart_container, "5": shell_container, "6": logs_container,
+        "7": stats_container, "8": inspect_container, "9": remove_container,
+    }
+    while True:
+        value = menu("CONTENEDORES", [
+            ("1", "Listar todos"), ("2", "Iniciar"), ("3", "Detener"),
+            ("4", "Reiniciar"), ("5", "Entrar a shell"), ("6", "Logs (también en vivo)"),
+            ("7", "CPU / RAM / red"), ("8", "Detalles y puertos"),
+            ("9", "Eliminar con confirmación"), ("0", "Volver"),
+        ])
+        if value == "0":
+            return
+        run_action(actions.get(value))
+
+
+def images_menu() -> None:
+    actions = {"1": list_images, "2": pull_image, "3": build_image, "4": remove_image}
+    while True:
+        value = menu("IMÁGENES", [
+            ("1", "Listar"), ("2", "Descargar (pull)"),
+            ("3", "Construir desde Dockerfile"), ("4", "Eliminar"), ("0", "Volver"),
+        ])
+        if value == "0":
+            return
+        run_action(actions.get(value))
+
+
+def data_menu() -> None:
+    actions = {"1": backup_workspace, "2": restore_workspace,
+               "3": copy_to_container, "4": copy_from_container}
+    while True:
+        value = menu("ARCHIVOS Y RESPALDOS", [
+            ("1", "Respaldar /workspace"), ("2", "Restaurar /workspace"),
+            ("3", "Copiar archivo hacia contenedor"),
+            ("4", "Copiar archivo desde contenedor"), ("0", "Volver"),
+        ])
+        if value == "0":
+            return
+        run_action(actions.get(value))
+
+
+def volumes_menu() -> None:
+    actions = {"1": list_volumes, "2": remove_volume}
+    while True:
+        value = menu("VOLÚMENES", [
+            ("1", "Listar"), ("2", "Eliminar volumen (peligroso)"), ("0", "Volver"),
+        ])
+        if value == "0":
+            return
+        run_action(actions.get(value))
+
+
+def run_action(action: Any) -> None:
+    if action is None:
+        warn("Opción no válida.")
+        pause()
+        return
+    try:
+        print()
+        action()
+    except Cancelled:
+        warn("Operación cancelada.")
+    except (DockerError, InputError, json.JSONDecodeError) as exc:
+        error(str(exc))
+    except KeyboardInterrupt:
+        warn("Operación interrumpida.")
+    pause()
+
+
+def check_docker() -> bool:
+    if shutil.which("docker") is None:
+        error("Docker CLI no está instalado o no está en PATH.")
+        return False
+    try:
+        docker(["info", "--format", "{{.ServerVersion}}"])
+    except DockerError as exc:
+        error("No se pudo conectar al daemon Docker.")
+        print(f"  {exc}")
+        print("  Revisa: systemctl status docker y los permisos de tu usuario.")
+        print("  Nota: pertenecer al grupo docker equivale a privilegios elevados.")
+        return False
+    return True
+
+
+def main() -> int:
+    if not check_docker():
+        return 1
+    actions = {
+        "1": containers_menu, "2": images_menu, "3": create_container,
+        "4": data_menu, "5": volumes_menu, "6": list_networks,
+        "7": disk_usage, "8": safe_cleanup,
+    }
+    while True:
+        try:
+            dashboard()
+            for key, label in [
+                ("1", "Contenedores         · start / stop / shell / logs / inspect"),
+                ("2", "Imágenes             · listar / descargar / construir / borrar"),
+                ("3", "Crear contenedor    · laboratorio o servicio"),
+                ("4", "Archivos y backups  · copiar / respaldar / restaurar"),
+                ("5", "Volúmenes           · listar / eliminar"),
+                ("6", "Redes Docker"),
+                ("7", "Uso de disco"),
+                ("8", "Limpieza segura"),
+                ("0", "Salir"),
+            ]:
+                print(f"  {C.CYAN}{key}{C.RESET}  {label}")
+            value = prompt("\nOpción")
+            if value == "0":
+                print("\n  Hasta luego. Tus contenedores siguen funcionando.\n")
+                return 0
+            run_action(actions.get(value))
+        except (DockerError, InputError) as exc:
+            error(str(exc))
+            pause()
+        except (EOFError, KeyboardInterrupt):
+            print("\n  Saliendo sin detener tus contenedores.\n")
+            return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

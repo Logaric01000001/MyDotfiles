@@ -1,25 +1,17 @@
 #!/usr/bin/env bash
-# =============================================================================
-#  power-menu.sh — Menú rápido de apagado/reinicio/suspend/logout usando rofi
-# =============================================================================
+# menu de energia con rofi
 
 export PATH="$HOME/.local/bin:$PATH"
 
-# Verificar que rofi está disponible
-if ! command -v rofi >/dev/null 2>&1; then
-  echo "Error: rofi no está instalado." >&2
-  exit 1
-fi
+command -v rofi >/dev/null || { echo "falta rofi" >&2; exit 1; }
 
-# Mostrar las opciones correctamente en renglones separados
-choice=$(echo -e "Lock\nShutdown\nReboot\nSuspend\nLogout\nCancel" | rofi -dmenu -i -p "Power Menu")
+choice=$(printf "Lock\nShutdown\nReboot\nSuspend\nLogout\nCancel\n" | rofi -dmenu -i -p "Power")
 
 case "$choice" in
-  Lock)     lock-and-restore.sh ;;               # Bloquear pantalla y restaurar Noctalia
-  Shutdown) save-state.sh && systemctl poweroff ;;                 # Apagar el equipo
-  Reboot)   save-state.sh && systemctl reboot   ;;                 # Reiniciar el equipo
-  Suspend)  save-state.sh && systemctl suspend  ;;                 # Suspender
-  Logout)   save-state.sh && (niri msg action quit || loginctl terminate-session "$XDG_SESSION_ID") ;; # Cerrar sesión
-  *) exit 0 ;;                                    # Cancelar o salir
+  Lock)     pidof hyprlock || hyprlock ;;
+  Shutdown) save-state.sh && systemctl poweroff ;;
+  Reboot)   save-state.sh && systemctl reboot ;;
+  Suspend)  save-state.sh && systemctl suspend ;;
+  Logout)   save-state.sh && (niri msg action quit || loginctl terminate-session "$XDG_SESSION_ID") ;;
+  *) exit 0 ;;
 esac
-

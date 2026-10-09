@@ -1,261 +1,128 @@
 #!/usr/bin/env bash
-# =============================================================================
-#   ALL-IN-ONE INSTALLER — NIRI COMPOSITOR & CATPPUCCIN MOCHA DOTFILES
-#   Instalador inteligente con prevención de conflictos y respaldo automático
-# =============================================================================
-
 set -e
 
-# Colores para la terminal
-BOLD='\033[1m'
-CYAN='\033[0;36m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-MAGENTA='\033[0;35m'
-RED='\033[0;31m'
-NC='\033[0m'
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-clear 2>/dev/null || true
-
-echo -e "${CYAN}╔═════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║     INSTALADOR MAESTRO — DOTFILES NIRI & CATPPUCCIN MOCHA    ║${NC}"
-echo -e "${CYAN}║     Instalación Segura, Cero Conflictos y Respaldo Automático   ║${NC}"
-echo -e "${CYAN}╚═════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-
-# -----------------------------------------------------------------------------
-# 1. DETERMINAR DIRECTORIO DE DOTFILES
-# -----------------------------------------------------------------------------
-if [ -n "$BASH_SOURCE" ] && [ -f "$BASH_SOURCE" ]; then
-    DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-else
-    DOTFILES_DIR="$HOME/MyDotfiles"
-fi
-
-if [ ! -f "$DOTFILES_DIR/config.kdl" ]; then
-    echo -e "${BLUE}[Paso Previo] Descargando repositorio en ${DOTFILES_DIR}...${NC}"
-    git clone https://github.com/Logaric01000001/MyDotfiles.git "$DOTFILES_DIR" || {
-        echo -e "${RED}❌ No se pudo descargar el repositorio. Verifica tu conexión a internet.${NC}"
-        exit 1
-    }
-fi
-
-# -----------------------------------------------------------------------------
-# 2. VERIFICACIÓN DE SISTEMA Y PREVENCIÓN DE BLOQUEOS
-# -----------------------------------------------------------------------------
 if [ ! -f /etc/arch-release ]; then
-    echo -e "${YELLOW}Aviso: Este instalador está optimizado para Arch Linux y derivados (EndeavourOS, CachyOS, Manjaro).${NC}"
-    if [ -t 0 ]; then
-        read -rp "   ¿Deseas continuar de todas formas? [s/N]: " confirm
-        if [[ ! "$confirm" =~ ^[sS]$ ]]; then
-            echo -e "${RED}Instalación cancelada por el usuario.${NC}"
-            exit 0
-        fi
-    fi
+    echo "aviso: este script es para arch linux"
 fi
 
-# Comprobar si pacman está bloqueado por otro proceso
 if [ -f /var/lib/pacman/db.lck ]; then
-    echo -e "${YELLOW}El archivo de bloqueo de pacman (/var/lib/pacman/db.lck) está presente.${NC}"
-    echo -e "   Es posible que otra actualización o instalación esté en curso."
-    if [ -t 0 ]; then
-        read -rp "   ¿Deseas esperar 5 segundos y reintentar? [S/n]: " retry
-        if [[ ! "$retry" =~ ^[nN]$ ]]; then
-            sleep 5
-        fi
-    fi
+    echo "pacman esta bloqueado (/var/lib/pacman/db.lck)"
+    exit 1
 fi
 
-# -----------------------------------------------------------------------------
-# 3. GESTIÓN DE PAQUETES (PACMAN Y AUR SIN CONFLICTOS)
-# -----------------------------------------------------------------------------
-PACMAN_PKGS=(
-    base-devel
-    git
-    niri
-    hyprlock
-    swaylock
-    swaybg
-    swayidle
-    rofi-wayland
-    wl-mirror
-    kitty
-    dolphin
-    fastfetch
-    zsh
-    starship
-    eza
-    zoxide
-    fuzzel
-    cliphist
-    kvantum
-    kvantum-qt5
-    pipewire
-    wireplumber
-    brightnessctl
-    playerctl
-    polkit-gnome
-    xdg-desktop-portal-gnome
-    xdg-desktop-portal-gtk
-    ttf-jetbrains-mono-nerd
-    ttf-inter
-    papirus-icon-theme
-    wl-clipboard
-    grim
-    slurp
+PKGS=(
+    base-devel git niri hyprlock swaylock swaybg swayidle
+    rofi-wayland wl-mirror kitty dolphin fastfetch zsh
+    starship eza zoxide fuzzel cliphist kvantum kvantum-qt5
+    pipewire wireplumber brightnessctl playerctl polkit-gnome
+    xdg-desktop-portal-gnome xdg-desktop-portal-gtk
+    ttf-jetbrains-mono-nerd ttf-inter papirus-icon-theme
+    wl-clipboard grim slurp
 )
 
-echo -e "${MAGENTA}${BOLD}[1/4] Comprobando e instalando paquetes oficiales...${NC}"
+echo "instalando paquetes..."
 if command -v pacman &>/dev/null; then
     if command -v sudo &>/dev/null; then
-        sudo pacman -S --needed --noconfirm "${PACMAN_PKGS[@]}" 2>/dev/null || true
+        sudo pacman -S --needed --noconfirm "${PKGS[@]}" 2>/dev/null || true
     else
-        su -c "pacman -S --needed --noconfirm ${PACMAN_PKGS[*]}" 2>/dev/null || true
+        su -c "pacman -S --needed --noconfirm ${PKGS[*]}" 2>/dev/null || true
     fi
 fi
 
-# Verificación / Instalación de AUR Helper
-echo ""
-echo -e "${MAGENTA}${BOLD}[2/4] Verificando gestor de AUR (yay / paru)...${NC}"
+# aur helper
 AUR_HELPER=""
-if command -v yay &>/dev/null; then
-    AUR_HELPER="yay"
-elif command -v paru &>/dev/null; then
+if command -v paru &>/dev/null; then
     AUR_HELPER="paru"
+elif command -v yay &>/dev/null; then
+    AUR_HELPER="yay"
 elif command -v pacman &>/dev/null; then
-    echo -e "${YELLOW}Instalando 'yay' automáticamente para paquetes de AUR...${NC}"
-    TMP_DIR=$(mktemp -d)
-    git clone https://aur.archlinux.org/yay-bin.git "$TMP_DIR/yay-bin" 2>/dev/null || true
-    (cd "$TMP_DIR/yay-bin" && makepkg -si --noconfirm 2>/dev/null) || true
-    rm -rf "$TMP_DIR"
+    echo "instalando yay..."
+    TMP=$(mktemp -d)
+    git clone https://aur.archlinux.org/yay-bin.git "$TMP/yay-bin" 2>/dev/null || true
+    (cd "$TMP/yay-bin" && makepkg -si --noconfirm 2>/dev/null) || true
+    rm -rf "$TMP"
     AUR_HELPER="yay"
 fi
 
 if [ -n "$AUR_HELPER" ]; then
-    echo -e "   ${GREEN}✔ Gestor AUR:${NC} $AUR_HELPER"
-    
-    # Instalar Noctalia Shell, Zen Browser y VScodium desde AUR
-    if ! command -v noctalia &>/dev/null; then
-        echo -e "${BLUE}Instalando Noctalia Shell desde AUR...${NC}"
-        $AUR_HELPER -S --needed --noconfirm noctalia-bin || $AUR_HELPER -S --needed --noconfirm noctalia || true
-    fi
-
-    if ! command -v zen-browser &>/dev/null; then
-        echo -e "${BLUE}Instalando Zen Browser desde AUR...${NC}"
-        $AUR_HELPER -S --needed --noconfirm zen-browser-bin || true
-    fi
-
+    command -v noctalia &>/dev/null || $AUR_HELPER -S --needed --noconfirm noctalia-bin || true
+    command -v zen-browser &>/dev/null || $AUR_HELPER -S --needed --noconfirm zen-browser-bin || true
     if ! command -v codium &>/dev/null && ! command -v vscodium &>/dev/null; then
-        echo -e "${BLUE}Instalando VScodium desde AUR...${NC}"
         $AUR_HELPER -S --needed --noconfirm vscodium-bin || true
     fi
 fi
 
-# -----------------------------------------------------------------------------
-# 4. CREACIÓN DE DIRECTORIOS Y SISTEMA DE RESPALDO SEGURO
-# -----------------------------------------------------------------------------
-echo ""
-echo -e "${MAGENTA}${BOLD}[3/4] Preparando carpetas y gestionando respaldos...${NC}"
+# directorios
+mkdir -p "$HOME/.config"/{niri,hypr,swaylock,rofi,noctalia,kitty,fastfetch,Kvantum}
+mkdir -p "$HOME/.config"/VSCodium/User "$HOME/.config"/"Antigravity IDE"/User
+mkdir -p "$HOME/.gemini/config/skills" "$HOME/.gemini/antigravity"
+mkdir -p "$HOME/.zsh" "$HOME/.local/bin" "$HOME/.local/share/applications"
+mkdir -p "$HOME/Imágenes"/{Capturas,Fondos} "$HOME/Descargas"
 
+# backup e instalacion de archivos
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="$HOME/.config/dotfiles_backup_$TIMESTAMP"
-HAS_BACKUP=false
 
-mkdir -p "$HOME/.config/niri"
-mkdir -p "$HOME/.config/hypr"
-mkdir -p "$HOME/.config/swaylock"
-mkdir -p "$HOME/.config/rofi"
-mkdir -p "$HOME/.config/noctalia"
-mkdir -p "$HOME/.config/kitty"
-mkdir -p "$HOME/.config/fastfetch"
-mkdir -p "$HOME/.config/Kvantum"
-mkdir -p "$HOME/.config/VSCodium/User"
-mkdir -p "$HOME/.config/Antigravity IDE/User"
-mkdir -p "$HOME/.gemini/config/skills"
-mkdir -p "$HOME/.gemini/antigravity"
-mkdir -p "$HOME/.zsh"
-mkdir -p "$HOME/.local/bin"
-mkdir -p "$HOME/Imágenes/Capturas"
-mkdir -p "$HOME/Imágenes/Fondos"
-mkdir -p "$HOME/Descargas"
-
-# -----------------------------------------------------------------------------
-# 5. COPIA SEGURA DE ARCHIVOS (RESOLUCIÓN DE CONFLICTOS)
-# -----------------------------------------------------------------------------
-echo ""
-echo -e "${MAGENTA}${BOLD}[4/4] Instalando archivos de configuración (Copia directa)...${NC}"
-
-safe_install_file() {
+install_file() {
     local src="$1"
     local dest="$2"
-    local rel_dest="${dest#$HOME/}"
+    [ -e "$src" ] || return 0
 
-    if [ ! -e "$src" ]; then
-        return 0
-    fi
-
-    if [ -e "$dest" ] || [ -L "$dest" ]; then
-        if [ -L "$dest" ]; then
-            rm -f "$dest"
-        else
-            if ! cmp -s "$src" "$dest"; then
-                mkdir -p "$BACKUP_DIR/$(dirname "$rel_dest")"
-                cp -a "$dest" "$BACKUP_DIR/$rel_dest"
-                HAS_BACKUP=true
-                echo -e "   ${YELLOW}Respaldo creado:${NC} $dest → $BACKUP_DIR/$rel_dest"
-            fi
-            rm -f "$dest"
+    if [ -e "$dest" ] && [ ! -L "$dest" ]; then
+        if ! cmp -s "$src" "$dest"; then
+            mkdir -p "$BACKUP_DIR/$(dirname "${dest#$HOME/}")"
+            cp -a "$dest" "$BACKUP_DIR/${dest#$HOME/}"
         fi
     fi
-
     mkdir -p "$(dirname "$dest")"
     cp -Rf "$src" "$dest"
-    echo -e "   ${GREEN}✔ Instalado:${NC} $dest"
 }
 
-# Configuración Niri
-safe_install_file "$DOTFILES_DIR/config.kdl" "$HOME/.config/niri/config.kdl"
+echo "copiando configuraciones..."
+install_file "$DOTFILES_DIR/config.kdl" "$HOME/.config/niri/config.kdl"
+install_file "$DOTFILES_DIR/hyprlock.conf" "$HOME/.config/hypr/hyprlock.conf"
+install_file "$DOTFILES_DIR/swaylock.conf" "$HOME/.config/swaylock/config"
 
-# Bloqueadores de pantalla
-safe_install_file "$DOTFILES_DIR/hyprlock.conf" "$HOME/.config/hypr/hyprlock.conf"
-safe_install_file "$DOTFILES_DIR/swaylock.conf" "$HOME/.config/swaylock/config"
-
-# Rofi y Noctalia
 if [ -d "$DOTFILES_DIR/rofi" ]; then
     for f in "$DOTFILES_DIR/rofi"/*; do
-        safe_install_file "$f" "$HOME/.config/rofi/$(basename "$f")"
+        install_file "$f" "$HOME/.config/rofi/$(basename "$f")"
     done
 fi
 
 if [ -d "$DOTFILES_DIR/noctalia" ]; then
-    safe_install_file "$DOTFILES_DIR/noctalia/config.toml" "$HOME/.config/noctalia/config.toml"
+    install_file "$DOTFILES_DIR/noctalia/config.toml" "$HOME/.config/noctalia/config.toml"
     if [ -d "$DOTFILES_DIR/noctalia/palettes" ]; then
         mkdir -p "$HOME/.config/noctalia/palettes"
         cp -rf "$DOTFILES_DIR/noctalia/palettes"/* "$HOME/.config/noctalia/palettes/" 2>/dev/null || true
     fi
 fi
 
-# Terminal Kitty
 if [ -d "$DOTFILES_DIR/kitty" ]; then
-    safe_install_file "$DOTFILES_DIR/kitty/kitty.conf" "$HOME/.config/kitty/kitty.conf"
+    install_file "$DOTFILES_DIR/kitty/kitty.conf" "$HOME/.config/kitty/kitty.conf"
     if [ -d "$DOTFILES_DIR/kitty/themes" ]; then
         mkdir -p "$HOME/.config/kitty/themes"
         cp -rf "$DOTFILES_DIR/kitty/themes"/* "$HOME/.config/kitty/themes/" 2>/dev/null || true
     fi
 fi
 
-# Fastfetch
-safe_install_file "$DOTFILES_DIR/fastfetch/config.jsonc" "$HOME/.config/fastfetch/config.jsonc"
-if [ -f "$DOTFILES_DIR/fastfetch/logo.txt" ]; then
-    safe_install_file "$DOTFILES_DIR/fastfetch/logo.txt" "$HOME/.config/fastfetch/logo.txt"
+install_file "$DOTFILES_DIR/fastfetch/config.jsonc" "$HOME/.config/fastfetch/config.jsonc"
+[ -f "$DOTFILES_DIR/fastfetch/logo.txt" ] && install_file "$DOTFILES_DIR/fastfetch/logo.txt" "$HOME/.config/fastfetch/logo.txt"
+
+install_file "$DOTFILES_DIR/Kvantum/kvantum.kvconfig" "$HOME/.config/Kvantum/kvantum.kvconfig"
+install_file "$DOTFILES_DIR/dolphinrc" "$HOME/.config/dolphinrc"
+install_file "$DOTFILES_DIR/mimeapps.list" "$HOME/.config/mimeapps.list"
+
+# tema gtk (FlatColor dependia de pywal y dejaba las apps transparentes)
+install_file "$DOTFILES_DIR/gtk/settings.ini" "$HOME/.config/gtk-3.0/settings.ini"
+install_file "$DOTFILES_DIR/gtk/settings.ini" "$HOME/.config/gtk-4.0/settings.ini"
+if command -v gsettings &>/dev/null; then
+    gsettings set org.gnome.desktop.interface gtk-theme 'Catppuccin' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
 fi
 
-# Navegador de archivos Dolphin (Fondo Sólido sin Transparencia)
-safe_install_file "$DOTFILES_DIR/Kvantum/kvantum.kvconfig" "$HOME/.config/Kvantum/kvantum.kvconfig"
-safe_install_file "$DOTFILES_DIR/dolphinrc" "$HOME/.config/dolphinrc"
-
-# Configurar Kitty como terminal por defecto en Dolphin / KDE
+# terminal por defecto para kde/dolphin
 if command -v kwriteconfig6 &>/dev/null; then
     kwriteconfig6 --file kdeglobals --group General --key TerminalApplication kitty
     kwriteconfig6 --file kdeglobals --group General --key TerminalService kitty.desktop
@@ -264,166 +131,111 @@ elif command -v kwriteconfig5 &>/dev/null; then
     kwriteconfig5 --file kdeglobals --group General --key TerminalService kitty.desktop
 fi
 
-
-# Asociaciones de archivos (MIME types)
-safe_install_file "$DOTFILES_DIR/mimeapps.list" "$HOME/.config/mimeapps.list"
-
-# Accesos directos personalizados (como LibreOffice con XWayland)
 if [ -d "$DOTFILES_DIR/applications" ]; then
-    mkdir -p "$HOME/.local/share/applications"
     for app in "$DOTFILES_DIR/applications"/*; do
-        safe_install_file "$app" "$HOME/.local/share/applications/$(basename "$app")"
+        install_file "$app" "$HOME/.local/share/applications/$(basename "$app")"
     done
     update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
 fi
 
-# Antigravity IDE / VSCodium / VSCode
-safe_install_file "$DOTFILES_DIR/vscode/settings.json" "$HOME/.config/VSCodium/User/settings.json"
-safe_install_file "$DOTFILES_DIR/vscode/settings.json" "$HOME/.config/Antigravity IDE/User/settings.json"
+install_file "$DOTFILES_DIR/vscode/settings.json" "$HOME/.config/VSCodium/User/settings.json"
+install_file "$DOTFILES_DIR/vscode/settings.json" "$HOME/.config/Antigravity IDE/User/settings.json"
 
-# Shell Zsh
+# zsh
 if [ -d "$DOTFILES_DIR/zsh" ]; then
     for zfile in "$DOTFILES_DIR/zsh"/*; do
         bname=$(basename "$zfile")
-        if [ "$bname" != "starship" ]; then
-            safe_install_file "$zfile" "$HOME/.zsh/$bname"
-        fi
+        [ "$bname" != "starship" ] && install_file "$zfile" "$HOME/.zsh/$bname"
     done
     if [ -d "$DOTFILES_DIR/zsh/starship" ]; then
         mkdir -p "$HOME/.zsh/starship"
         cp -rf "$DOTFILES_DIR/zsh/starship"/* "$HOME/.zsh/starship/" 2>/dev/null || true
     fi
-    # Crear enlace simbólico de .zshrc a ~/.zshrc
     rm -f "$HOME/.zshrc"
     ln -sf "$HOME/.zsh/.zshrc" "$HOME/.zshrc"
-    echo -e "   ${GREEN}✔ Enlace creado:${NC} ~/.zshrc → ~/.zsh/.zshrc"
 fi
 
-# Instalación de utilidades personalizadas en ~/.local/bin
-mkdir -p "$HOME/.local/bin"
+# scripts
 if [ -d "$DOTFILES_DIR/scripts" ]; then
     for script in "$DOTFILES_DIR/scripts"/*; do
         sname=$(basename "$script")
         cp -f "$script" "$HOME/.local/bin/$sname"
         chmod +x "$HOME/.local/bin/$sname"
-        echo -e "   ${GREEN}✔ Script instalado:${NC} ~/.local/bin/$sname"
     done
 fi
 
-# Gestor de Agent Skills para Google Antigravity IDE
+# skills
 if [ -d "$DOTFILES_DIR/skills" ]; then
-    echo -e "\n${BLUE}Configurando Gestor de Agent Skills (Google Antigravity)...${NC}"
     chmod +x "$DOTFILES_DIR/skills/skills" "$DOTFILES_DIR/skills/install-antigravity-skills.sh" 2>/dev/null || true
     ln -sf "$DOTFILES_DIR/skills/skills" "$HOME/.local/bin/skills"
-    echo -e "   ${GREEN}✔ Comando 'skills' vinculado:${NC} ~/.local/bin/skills → $DOTFILES_DIR/skills/skills"
-    
-    # Enlace de compatibilidad entre ~/.gemini/config/skills y ~/.gemini/antigravity/skills
     if [ ! -e "$HOME/.gemini/antigravity/skills" ]; then
         ln -sf "$HOME/.gemini/config/skills" "$HOME/.gemini/antigravity/skills" 2>/dev/null || true
     fi
 fi
 
-# Servicio systemd para restaurar Noctalia tras suspender/hibernar
-if [ -f "$DOTFILES_DIR/systemd/noctalia-resume.service" ]; then
-    echo -e "\n${BLUE}Configurando servicio de reanudación de Noctalia...${NC}"
-    if command -v sudo &>/dev/null; then
-        sudo cp -f "$DOTFILES_DIR/systemd/noctalia-resume.service" "/etc/systemd/system/noctalia-resume@.service" 2>/dev/null && \
-        sudo systemctl daemon-reload 2>/dev/null && \
-        sudo systemctl enable "noctalia-resume@$(whoami).service" 2>/dev/null && \
-        echo -e "   ${GREEN}✔ Servicio noctalia-resume habilitado.${NC}" || true
-    fi
-fi
-
-# Evitar conflictos de notificaciones enmascarando swaync
-if systemctl --user list-unit-files | grep -q swaync.service 2>/dev/null; then
-    echo -e "   ${BLUE}Enmascarando swaync.service para evitar conflictos con las notificaciones de Noctalia...${NC}"
-    systemctl --user mask swaync.service 2>/dev/null || true
-fi
-
-# Configuración personalizada de SDDM
+# silentsddm si existe
 if [ -d "/usr/share/sddm/themes/SilentSDDM" ] && [ -f "$DOTFILES_DIR/sddm/default-left.conf" ]; then
     if command -v sudo &>/dev/null; then
         sudo cp -f "$DOTFILES_DIR/sddm/default-left.conf" "/usr/share/sddm/themes/SilentSDDM/configs/default-left.conf" 2>/dev/null || true
-        echo -e "   ${GREEN}✔ SDDM configurado (Catppuccin Mocha).${NC}"
     fi
 fi
 
-# Asegurar ~/.local/bin en el PATH
+# path
 for rfile in "$HOME/.zshrc" "$HOME/.bashrc"; do
     if [ -f "$rfile" ] && ! grep -q '\.local/bin' "$rfile"; then
         echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$rfile"
-        echo -e "   ${GREEN}✔ PATH configurado en:${NC} $rfile"
     fi
 done
 
-# Cambiar shell por defecto a Zsh si está instalado
+# zsh por defecto
 if command -v zsh &>/dev/null && [ "$SHELL" != "$(which zsh)" ]; then
-    echo -e "${BLUE}Estableciendo Zsh como shell por defecto...${NC}"
     chsh -s "$(which zsh)" "$USER" 2>/dev/null || true
 fi
 
-# Configuración optimizada de Bluetooth (prevención de desconexiones y estabilidad)
-echo -e "\n${BLUE}Configurando Bluetooth...${NC}"
-if [ -f /etc/bluetooth/main.conf ] && command -v sudo &>/dev/null; then
-    sudo sed -i -E 's/^[#[:space:]]*ControllerMode[[:space:]]*=.*/ControllerMode = dual/' /etc/bluetooth/main.conf 2>/dev/null || true
-    sudo sed -i -E 's/^[#[:space:]]*FastConnectable[[:space:]]*=.*/FastConnectable = false/' /etc/bluetooth/main.conf 2>/dev/null || true
-    sudo sed -i 's/#AutoEnable=true/AutoEnable=true/' /etc/bluetooth/main.conf 2>/dev/null || true
-    sudo sed -i 's/#NameResolving = true/NameResolving = true/' /etc/bluetooth/main.conf 2>/dev/null || true
-    sudo sed -i 's/#RemoteNameRequestRetryDelay = 300/RemoteNameRequestRetryDelay = 5/' /etc/bluetooth/main.conf 2>/dev/null || true
-    
-    sudo sed -i -E 's/^[#[:space:]]*FilterDiscoverable[[:space:]]*=.*/FilterDiscoverable = true/' /etc/bluetooth/main.conf 2>/dev/null || true
-    sudo sed -i -E 's/^[#[:space:]]*TemporaryTimeout[[:space:]]*=.*/TemporaryTimeout = 10/' /etc/bluetooth/main.conf 2>/dev/null || true
-    
-    echo "options btusb enable_autosuspend=n" | sudo tee /etc/modprobe.d/btusb.conf >/dev/null 2>/dev/null || true
-    sudo systemctl restart bluetooth 2>/dev/null || true
-    echo -e "   ${GREEN}✔ Bluetooth optimizado correctamente.${NC}"
+# bluetooth y wifi (rtl8821ce)
+if command -v sudo &>/dev/null; then
+    conf=/etc/bluetooth/main.conf
+    if [ -f "$conf" ]; then
+        sudo sed -i -E 's/^[#[:space:]]*ControllerMode[[:space:]]*=.*/ControllerMode = bredr/' "$conf" 2>/dev/null || true
+        sudo sed -i -E 's/^[#[:space:]]*FastConnectable[[:space:]]*=.*/FastConnectable = false/' "$conf" 2>/dev/null || true
+        sudo sed -i -E 's/^[#[:space:]]*AutoEnable[[:space:]]*=.*/AutoEnable = false/' "$conf" 2>/dev/null || true
+        sudo sed -i 's/#NameResolving = true/NameResolving = true/' "$conf" 2>/dev/null || true
+        sudo sed -i 's/#RemoteNameRequestRetryDelay = 300/RemoteNameRequestRetryDelay = 5/' "$conf" 2>/dev/null || true
+        sudo sed -i -E 's/^[#[:space:]]*FilterDiscoverable[[:space:]]*=.*/FilterDiscoverable = true/' "$conf" 2>/dev/null || true
+        sudo sed -i -E 's/^[#[:space:]]*TemporaryTimeout[[:space:]]*=.*/TemporaryTimeout = 10/' "$conf" 2>/dev/null || true
+        grep -q "JustWorksRepairing" "$conf" || sudo sed -i '/\[General\]/a JustWorksRepairing = always' "$conf" 2>/dev/null || true
+        echo "options btusb enable_autosuspend=n" | sudo tee /etc/modprobe.d/btusb.conf >/dev/null 2>&1 || true
+        sudo systemctl restart bluetooth 2>/dev/null || true
+    fi
+
+    # iwd entra en conflicto con wpa_supplicant en networkmanager
+    if systemctl list-unit-files NetworkManager.service &>/dev/null; then
+        sudo systemctl disable --now iwd 2>/dev/null || true
+        sudo systemctl mask iwd 2>/dev/null || true
+        printf '[device]\nwifi.backend=wpa_supplicant\n' | sudo tee /etc/NetworkManager/conf.d/wifi-backend.conf >/dev/null 2>&1 || true
+        if lspci 2>/dev/null | grep -qi "RTL8821CE"; then
+            sudo rm -f /etc/modprobe.d/rtl8821ce.conf
+            printf 'options rtw88_pci disable_aspm=y\noptions rtw88_core disable_lps_deep=y\n' | sudo tee /etc/modprobe.d/rtw88.conf >/dev/null 2>&1 || true
+        fi
+    fi
+
+    # evitar suspension automatica al cerrar la tapa o por inactividad
+    if [ -f "$DOTFILES_DIR/systemd/logind.conf.d/00-no-sleep.conf" ]; then
+        sudo mkdir -p /etc/systemd/logind.conf.d
+        sudo cp -f "$DOTFILES_DIR/systemd/logind.conf.d/00-no-sleep.conf" /etc/systemd/logind.conf.d/00-no-sleep.conf 2>/dev/null || true
+        sudo systemctl reload systemd-logind 2>/dev/null || true
+    fi
 fi
 
-# Desactivar cambio agresivo a perfil de micrófono en WirePlumber (evita que audífonos se desconecten)
+# no cambiar a perfil headset en wireplumber
 if command -v wpctl &>/dev/null; then
     wpctl settings --save bluetooth.autoswitch-to-headset-profile false 2>/dev/null || true
 fi
 
-# -----------------------------------------------------------------------------
-# 6. RECARGA EN VIVO (SI NIRI ESTÁ EN EJECUCIÓN)
-# -----------------------------------------------------------------------------
+# recargar niri si esta corriendo
 if pgrep -x niri &>/dev/null; then
-    echo ""
-    echo -e "${BLUE}Niri está en ejecución. Recargando configuración al vuelo...${NC}"
     niri msg action load-config-file 2>/dev/null || true
 fi
 
-# -----------------------------------------------------------------------------
-# 7. RESUMEN FINAL
-# -----------------------------------------------------------------------------
-echo ""
-echo -e "${GREEN}╔═════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║           ¡INSTALACIÓN COMPLETADA SIN CONFLICTOS!            ║${NC}"
-echo -e "${GREEN}╚═════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-if [ "$HAS_BACKUP" = true ]; then
-    echo -e "${YELLOW}Tus configuraciones anteriores se guardaron de forma segura en:${NC}"
-    echo -e "   ${BOLD}$BACKUP_DIR${NC}"
-    echo ""
-fi
-
-echo -e "${BOLD}Resumen de atajos configurados:${NC}"
-echo -e "  • ${CYAN}Mod + Shift + H${NC}    → Guía interactiva de atajos en pantalla (Help)"
-echo -e "  • ${CYAN}Mod + Enter${NC}        → Terminal (Kitty)"
-echo -e "  • ${CYAN}Mod + E${NC}            → Navegador de Archivos (Dolphin - Fondo Sólido Opaco)"
-echo -e "  • ${CYAN}Mod + C${NC}            → Editor de código (Antigravity IDE / VScodium)"
-echo -e "  • ${CYAN}Mod + S${NC}            → Menú de Energía (Apagar, Reiniciar, Bloquear, Logout)"
-echo -e "  • ${CYAN}Mod + D / Espacio${NC}  → Lanzador de aplicaciones (Rofi minimalista)"
-echo -e "  • ${CYAN}Mod + B${NC}            → Navegador Web (Zen Browser)"
-echo -e "  • ${CYAN}Mod + W${NC}            → Cambiar fondo de pantalla"
-echo -e "  • ${CYAN}Mod + A${NC}            → Panel de Ajustes y Barra (Noctalia)"
-echo -e "  • ${CYAN}Mod + L${NC}            → Bloquear pantalla (Hyprlock + Auto-restaurar Noctalia)"
-echo -e "  • ${CYAN}Mod + F${NC}            → Maximizar ventana"
-echo -e "  • ${CYAN}Mod + Q${NC}            → Cerrar ventana activa"
-echo ""
-echo -e "${BOLD}Utilidades de terminal integradas:${NC}"
-echo -e "  • ${CYAN}skills${NC}                 → Gestor interactivo de 42 Agent Skills de Antigravity"
-echo -e "  • ${CYAN}up${NC}                     → Actualizador Inteligente de Sistema (sysupdate.sh)"
-echo ""
-echo -e "${GREEN}¡Todo listo! Tu entorno dotfiles está 100% instalado, protegido y sin transparencias molestas.${NC}"
-echo ""
+[ -d "$BACKUP_DIR" ] && echo "backup guardado en $BACKUP_DIR"
+echo "instalacion completa"

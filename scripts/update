@@ -26,70 +26,57 @@ def warn(msg: str):
 
 
 def run_command(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
-    """Ejecuta un comando interactivo redirigiendo stdout/stderr."""
     return subprocess.run(cmd, check=check)
 
 
 def update_mirrors():
-    log("1/5: Optimizando lista de mirrors (Servidores Globales Oficiales)...")
+    log("1/5 mirrors")
     try:
-        # Extrae los servidores seguros y rápidos directamente de la API de Arch Linux
         cmd = "curl -s 'https://archlinux.org/mirrorlist/?protocol=https&ip_version=4&use_mirror_status=on' | grep -v 'pkgbuild.com' | sed -e 's/^#Server/Server/' | sudo tee /etc/pacman.d/mirrorlist > /dev/null"
         subprocess.run(cmd, shell=True, check=True)
-        success("Mirrors actualizados desde la fuente oficial de Arch.")
+        success("mirrorlist actualizado")
     except subprocess.CalledProcessError:
-        warn("No se pudo contactar con Arch Linux. Se usarán los espejos actuales.")
+        warn("no se pudo bajar la mirrorlist, sigo con la actual")
 
 
 def update_pacman_aur():
-    log("2/5: Actualizando Pacman y AUR...")
+    log("2/5 pacman + aur")
     if shutil.which("paru"):
         run_command(["paru", "-Syu"])
     elif shutil.which("yay"):
         run_command(["yay", "-Syu"])
     else:
         run_command(["sudo", "pacman", "-Syu"])
-    success("Paquetes nativos actualizados.")
 
 
 def update_flatpaks():
     if shutil.which("flatpak"):
-        log("3/5: Actualizando Flatpaks...")
+        log("3/5 flatpak")
         run_command(["flatpak", "update", "-y"])
         run_command(["flatpak", "uninstall", "--unused", "-y"])
-        success("Flatpaks actualizados y limpios.")
     else:
-        warn("Flatpak no está instalado.")
+        warn("sin flatpak")
 
 
 def update_appimages():
-    log("4/5: Gestión de AppImages...")
-    if shutil.which("appimageupdatetool"):
-        warn("Herramienta detectada, pero requiere que indiques la ruta de cada AppImage manualmente.")
-    else:
-        warn("Tienes AppImages. Recuerda que son ejecutables portables; actualízalos desde su web oficial cuando sea necesario.")
+    log("4/5 appimages")
+    warn("las appimages se actualizan a mano")
 
 
 def maintenance():
-    log("5/5: Mantenimiento (Huérfanos y Caché)...")
-    
-    # Huérfanos
+    log("5/5 huerfanos y cache")
+
     result = subprocess.run(["pacman", "-Qtdq"], capture_output=True, text=True)
     orphans = result.stdout.strip().splitlines()
     if orphans:
         run_command(["sudo", "pacman", "-Rns", *orphans])
-        success(f"Eliminados {len(orphans)} paquete(s) huérfano(s).")
-    else:
-        success("No hay paquetes huérfanos.")
-    
-    # Caché
+        success(f"{len(orphans)} huerfanos borrados")
+
     if shutil.which("paccache"):
         run_command(["sudo", "paccache", "-r"])
         run_command(["sudo", "paccache", "-ruk0"])
-        success("Caché optimizada (conservadas últimas 3 versiones).")
     else:
         run_command(["sudo", "pacman", "-Sc", "--noconfirm"])
-        success("Caché limpiada con pacman.")
 
 
 def check_kernel_reboot():
@@ -99,9 +86,7 @@ def check_kernel_reboot():
         installed_kernel = result.stdout.strip().split()[1]
 
         if running_kernel not in installed_kernel:
-            print(f"\n{Colors.RED}" + "-" * 50)
-            print("[!] El Kernel fue actualizado. Se recomienda reiniciar el sistema.")
-            print("-" * 50 + f"{Colors.RESET}")
+            warn("kernel nuevo, reinicia")
     except subprocess.CalledProcessError:
         pass
 
@@ -114,12 +99,12 @@ def main():
         update_appimages()
         maintenance()
         check_kernel_reboot()
-        success("¡Actualización total completada con éxito!")
+        success("listo")
     except subprocess.CalledProcessError as e:
-        print(f"\n{Colors.RED}[X] Error al ejecutar un comando.{Colors.RESET}")
+        print(f"\n{Colors.RED}[x] fallo un comando{Colors.RESET}")
         sys.exit(e.returncode)
     except KeyboardInterrupt:
-        print(f"\n{Colors.YELLOW}[!] Operación cancelada por el usuario.{Colors.RESET}")
+        print(f"\n{Colors.YELLOW}[!] cancelado{Colors.RESET}")
         sys.exit(130)
 
 

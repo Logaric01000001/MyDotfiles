@@ -1,15 +1,5 @@
 #!/usr/bin/env python3
-"""
-File Organizer - Single File Version
-=====================================
-Organizador de archivos con GUI (tkinter) en un solo archivo.
-- Ordena archivos por extensión en carpetas
-- Detecta duplicados por hash MD5
-- Funciona en Windows, Linux, Mac
-- Sin dependencias externas (solo stdlib)
-
-Uso: python3 file_organizer.py
-"""
+# organizador de archivos por extension + duplicados por md5 (tkinter)
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
@@ -19,9 +9,6 @@ from pathlib import Path
 from typing import Callable, Optional
 
 
-# ============================================================
-# CONFIG - Mapeo extensiones → carpetas
-# ============================================================
 EXTENSIONES_A_CARPETAS = {
     "imagenes": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".svg"],
     "documentos": [".pdf", ".doc", ".docx", ".txt", ".rtf", ".odt", ".tex"],
@@ -37,7 +24,6 @@ EXTENSIONES_A_CARPETAS = {
 
 
 def obtener_carpeta_para_extension(extension: str) -> str:
-    """Devuelve la carpeta destino para una extensión dada."""
     extension = extension.lower()
     for carpeta, extensiones in EXTENSIONES_A_CARPETAS.items():
         if extension in extensiones:
@@ -45,11 +31,7 @@ def obtener_carpeta_para_extension(extension: str) -> str:
     return "otros"
 
 
-# ============================================================
-# LOGIC - Lógica pura (sin GUI, testeable)
-# ============================================================
 def escanear_archivos(carpeta_origen: str) -> list[dict]:
-    """Escanea archivos en carpeta y devuelve lista con info y carpeta destino."""
     archivos = []
     for entrada in Path(carpeta_origen).iterdir():
         if entrada.is_file():
@@ -66,7 +48,6 @@ def escanear_archivos(carpeta_origen: str) -> list[dict]:
 
 def organizar_archivos(carpeta_origen: str, archivos: list[dict],
                        callback_progreso: Optional[Callable[[int, int], None]] = None) -> dict:
-    """Mueve archivos a sus carpetas destino. Retorna resumen."""
     resultado = {"movidos": 0, "errores": 0, "detalles": []}
 
     for i, archivo in enumerate(archivos):
@@ -75,7 +56,7 @@ def organizar_archivos(carpeta_origen: str, archivos: list[dict],
 
         ruta_destino = carpeta_destino / archivo["nombre"]
 
-        # Evitar sobrescribir: renombrar si existe
+        # no pisar archivos con el mismo nombre
         if ruta_destino.exists():
             base = ruta_destino.stem
             ext = ruta_destino.suffix
@@ -87,10 +68,10 @@ def organizar_archivos(carpeta_origen: str, archivos: list[dict],
         try:
             Path(archivo["ruta"]).rename(ruta_destino)
             resultado["movidos"] += 1
-            resultado["detalles"].append(f"��� {archivo['nombre']} → {archivo['carpeta_destino']}/")
+            resultado["detalles"].append(f"ok  {archivo['nombre']} → {archivo['carpeta_destino']}/")
         except Exception as e:
             resultado["errores"] += 1
-            resultado["detalles"].append(f"��� {archivo['nombre']}: {e}")
+            resultado["detalles"].append(f"err {archivo['nombre']}: {e}")
 
         if callback_progreso:
             callback_progreso(i + 1, len(archivos))
@@ -99,7 +80,6 @@ def organizar_archivos(carpeta_origen: str, archivos: list[dict],
 
 
 def calcular_hash_archivo(ruta: str, algoritmo: str = "md5") -> str:
-    """Calcula hash de un archivo (streaming para archivos grandes)."""
     hash_obj = hashlib.new(algoritmo)
     with open(ruta, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
@@ -109,7 +89,6 @@ def calcular_hash_archivo(ruta: str, algoritmo: str = "md5") -> str:
 
 def encontrar_duplicados(carpeta_origen: str,
                          callback_progreso: Optional[Callable[[int, int], None]] = None) -> dict:
-    """Busca archivos duplicados por contenido (hash MD5)."""
     archivos = escanear_archivos(carpeta_origen)
     hashes = {}
     duplicados = []
@@ -127,7 +106,7 @@ def encontrar_duplicados(carpeta_origen: str,
             else:
                 hashes[hash_archivo] = archivo["ruta"]
         except Exception:
-            pass  # Archivo no legible, saltar
+            pass
 
         if callback_progreso:
             callback_progreso(i + 1, len(archivos))
@@ -139,9 +118,6 @@ def encontrar_duplicados(carpeta_origen: str,
     }
 
 
-# ============================================================
-# GUI - Interfaz gráfica con tkinter
-# ============================================================
 class FileOrganizerApp:
     def __init__(self, root: tk.Tk):
         self.root = root
@@ -156,7 +132,6 @@ class FileOrganizerApp:
         frame_principal = ttk.Frame(self.root, padding="10")
         frame_principal.pack(fill=tk.BOTH, expand=True)
 
-        # Sección: Seleccionar carpeta
         frame_carpeta = ttk.LabelFrame(frame_principal, text="Carpeta a organizar", padding="10")
         frame_carpeta.pack(fill=tk.X, pady=(0, 10))
 
@@ -165,7 +140,6 @@ class FileOrganizerApp:
 
         ttk.Button(frame_carpeta, text="Examinar", command=self.seleccionar_carpeta).pack(side=tk.LEFT)
 
-        # Sección: Acciones
         frame_acciones = ttk.LabelFrame(frame_principal, text="Acciones", padding="10")
         frame_acciones.pack(fill=tk.X, pady=(0, 10))
 
@@ -175,14 +149,12 @@ class FileOrganizerApp:
         ttk.Button(frame_acciones, text="Buscar duplicados",
                    command=lambda: self.ejecutar_accion("duplicados")).pack(side=tk.LEFT, padx=5)
 
-        # Sección: Vista previa / Log
         frame_log = ttk.LabelFrame(frame_principal, text="Vista previa / Log", padding="10")
         frame_log.pack(fill=tk.BOTH, expand=True)
 
         self.text_log = scrolledtext.ScrolledText(frame_log, height=15, state=tk.DISABLED)
         self.text_log.pack(fill=tk.BOTH, expand=True)
 
-        # Barra de progreso
         self.progreso = ttk.Progressbar(frame_principal, mode="determinate")
         self.progreso.pack(fill=tk.X, pady=(10, 0))
         self.label_progreso = ttk.Label(frame_principal, text="")
