@@ -9,7 +9,7 @@ spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
 
 // no apagar pantallas por inactividad; bloquear solo si el usuario suspende manualmente
 spawn-at-startup "swayidle" "-w" \
-    "before-sleep" "bash -c 'PATH=$HOME/.local/bin:$PATH save-state.sh && (pidof hyprlock || hyprlock)'"
+    "before-sleep" "bash -c 'PATH=$HOME/.local/bin:$PATH lock-screen'"
 
 prefer-no-csd
 
@@ -180,7 +180,7 @@ binds {
     Mod+Shift+Q { close-window; }
     Mod+Q { close-window; }
 
-    Mod+L { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH save-state.sh && (pidof hyprlock || hyprlock)"; } // Bloquear
+    Mod+L { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH lock-screen"; } // Bloquear
     Mod+S { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH power-menu.sh"; } // Menu de energia
     Mod+P       { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH display-mode.sh"; } // Modo de pantalla
     Mod+Shift+D { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH display-mode.sh"; } // Modo de pantalla

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# =============================================================================
+#   lock-screen — Bloqueo seguro con hyprlock para Niri
+# =============================================================================
+export PATH="$HOME/.local/bin:$PATH"
+
+# Guardar estado de Bluetooth y DND
+save-state.sh 2>/dev/null || true
+
+# Si hay una instancia previa colgada o huérfana de hyprlock, matarla
+if pgrep -x hyprlock >/dev/null 2>&1; then
+    pkill -9 -x hyprlock 2>/dev/null || true
+    sleep 0.1
+fi
+
+# Ejecutar hyprlock
+exec hyprlock "$@"
