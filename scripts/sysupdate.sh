@@ -62,6 +62,11 @@ fi
 IGNORED_PKGS=$(grep -E "^IgnorePkg" /etc/pacman.conf | cut -d= -f2- | xargs)
 [ -n "$IGNORED_PKGS" ] && echo "IgnorePkg: $IGNORED_PKGS"
 
+# desactivar paquetes -debug si no esta configurado (evita errores de gdb-add-index y DWO en binarios de AUR)
+if [ ! -f "$HOME/.makepkg.conf" ] && [ ! -f "${XDG_CONFIG_HOME:-$HOME/.config}/pacman/makepkg.conf" ]; then
+    echo 'OPTIONS=(strip docs !libtool !staticlibs emptydirs zipman purge !debug lto)' > "$HOME/.makepkg.conf"
+fi
+
 # keyrings + mirrors de blackarch
 if grep -q "\[blackarch\]" /etc/pacman.conf; then
     ml=/etc/pacman.d/blackarch-mirrorlist
@@ -78,12 +83,36 @@ else
     sudo pacman -Sy --needed --noconfirm archlinux-keyring 2>/dev/null || true
 fi
 
+UPDATE_FAILED=0
 if command -v paru >/dev/null 2>&1; then
-    paru -Syu "${EXTRA_ARGS[@]}"
+    paru -Syu "${EXTRA_ARGS[@]}" || UPDATE_FAILED=$?
 elif command -v yay >/dev/null 2>&1; then
-    yay -Syu "${EXTRA_ARGS[@]}"
+    yay -Syu "${EXTRA_ARGS[@]}" || UPDATE_FAILED=$?
 else
-    sudo pacman -Syu "${EXTRA_ARGS[@]}"
+    sudo pacman -Syu "${EXTRA_ARGS[@]}" || UPDATE_FAILED=$?
+fi
+
+if [ "$UPDATE_FAILED" -ne 0 ]; then
+    echo
+    echo "algun paquete fallo durante la actualizacion."
+    if [ -t 0 ]; then
+        read -rp "reintentar algun paquete? [nombre / N]: " retry_pkg
+        while [[ -n "$retry_pkg" && ! "$retry_pkg" =~ ^[nN]$ ]]; do
+            if [ -d "$HOME/.cache/paru/clone/$retry_pkg" ]; then
+                echo "limpiando cache de $retry_pkg..."
+                rm -rf "$HOME/.cache/paru/clone/$retry_pkg/src" "$HOME/.cache/paru/clone/$retry_pkg"/*.pkg.tar.zst 2>/dev/null || true
+            fi
+            if command -v paru >/dev/null 2>&1; then
+                paru -S --rebuild "$retry_pkg" || echo "no se pudo instalar $retry_pkg"
+            elif command -v yay >/dev/null 2>&1; then
+                yay -S --rebuild "$retry_pkg" || echo "no se pudo instalar $retry_pkg"
+            else
+                sudo pacman -S "$retry_pkg" || echo "no se pudo instalar $retry_pkg"
+            fi
+            echo
+            read -rp "reintentar otro paquete? [nombre / Enter para terminar]: " retry_pkg
+        done
+    fi
 fi
 
 ORPHANS=$(pacman -Qtdq || true)
@@ -92,7 +121,7 @@ if [ -n "$ORPHANS" ]; then
     echo "huerfanos:"
     echo "$ORPHANS"
     read -rp "borrarlos? [s/N]: " rm_orphans
-    [[ "$rm_orphans" =~ ^[sS]$ ]] && sudo pacman -Rns $ORPHANS
+    [[ "$rm_orphans" =~ ^[sS]$ ]] && (sudo pacman -Rns $ORPHANS || true)
 fi
 
 # hace falta reiniciar?

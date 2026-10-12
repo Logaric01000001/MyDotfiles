@@ -155,6 +155,11 @@ if [ -d "$DOTFILES_DIR/zsh" ]; then
     ln -sf "$HOME/.zsh/.zshrc" "$HOME/.zshrc"
 fi
 
+# makepkg.conf
+if [ -f "$DOTFILES_DIR/makepkg.conf" ]; then
+    ln -sf "$DOTFILES_DIR/makepkg.conf" "$HOME/.makepkg.conf"
+fi
+
 # scripts
 if [ -d "$DOTFILES_DIR/scripts" ]; then
     for script in "$DOTFILES_DIR/scripts"/*; do
