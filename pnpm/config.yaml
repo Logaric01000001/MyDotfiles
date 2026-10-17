@@ -1,0 +1,3 @@
+fetchRetries: 5
+fetchTimeout: 600000
+networkConcurrency: 2

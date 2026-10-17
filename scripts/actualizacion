@@ -345,6 +345,24 @@ if [ "$SKIP_SYNC" = false ] && [ -d "$DOTFILES_DIR" ]; then
         log_ok "Accesos directos de escritorio (.desktop) sincronizados."
     fi
 
+    # Configuraciones específicas: wireplumber, opencode y pnpm
+    if [ -f "$DOTFILES_DIR/wireplumber/wireplumber.conf.d/51-disable-hsp-hfp.conf" ]; then
+        mkdir -p "$HOME/.config/wireplumber/wireplumber.conf.d"
+        cp -f "$DOTFILES_DIR/wireplumber/wireplumber.conf.d/51-disable-hsp-hfp.conf" "$HOME/.config/wireplumber/wireplumber.conf.d/51-disable-hsp-hfp.conf"
+    fi
+    if [ -f "$DOTFILES_DIR/opencode/sc-deepseek-overlay.json" ]; then
+        mkdir -p "$HOME/.config/opencode"
+        cp -f "$DOTFILES_DIR/opencode/sc-deepseek-overlay.json" "$HOME/.config/opencode/sc-deepseek-overlay.json"
+    fi
+    if [ -f "$DOTFILES_DIR/opencode/opencode.jsonc" ]; then
+        mkdir -p "$HOME/.config/opencode"
+        cp -f "$DOTFILES_DIR/opencode/opencode.jsonc" "$HOME/.config/opencode/opencode.jsonc"
+    fi
+    if [ -f "$DOTFILES_DIR/pnpm/config.yaml" ]; then
+        mkdir -p "$HOME/.config/pnpm"
+        cp -f "$DOTFILES_DIR/pnpm/config.yaml" "$HOME/.config/pnpm/config.yaml"
+    fi
+
     # Recargar Niri si está corriendo
     if pgrep -x niri >/dev/null 2>&1; then
         if command -v niri >/dev/null 2>&1; then

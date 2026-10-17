@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+# OpenCode combina este overlay con la configuración global preexistente.
+export OPENCODE_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/opencode/sc-deepseek-overlay.json"
+exec opencode "$@"

@@ -20,14 +20,40 @@ PKGS=(
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk
     ttf-jetbrains-mono-nerd ttf-inter papirus-icon-theme
     wl-clipboard grim slurp
+    bat btop fzf lazygit pacman-contrib lsof nwg-displays
+    networkmanager pnpm python
 )
+
+OPT_NO_SUDO=false
+OPT_YES=false
+
+for arg in "$@"; do
+    case "$arg" in
+        --no-sudo) OPT_NO_SUDO=true ;;
+        -y|--yes) OPT_YES=true ;;
+    esac
+done
+
+CAN_SUDO=false
+if [ "$OPT_NO_SUDO" = false ] && command -v sudo &>/dev/null; then
+    if sudo -n true 2>/dev/null; then
+        CAN_SUDO=true
+    elif [ "$OPT_YES" = true ] && sudo -v 2>/dev/null; then
+        CAN_SUDO=true
+    elif [ -t 0 ]; then
+        read -rp "¿Deseas instalar paquetes y configuraciones que requieren root (sudo)? [s/N]: " ask_sudo
+        if [[ "$ask_sudo" =~ ^[sS]$ ]] && sudo -v 2>/dev/null; then
+            CAN_SUDO=true
+        fi
+    fi
+fi
 
 echo "instalando paquetes..."
 if command -v pacman &>/dev/null; then
-    if command -v sudo &>/dev/null; then
+    if [ "$CAN_SUDO" = true ]; then
         sudo pacman -S --needed --noconfirm "${PKGS[@]}" 2>/dev/null || true
     else
-        su -c "pacman -S --needed --noconfirm ${PKGS[*]}" 2>/dev/null || true
+        echo "aviso: sin permisos de sudo inmediatos, se omiten paquetes de pacman que requieran root"
     fi
 fi
 
@@ -49,13 +75,14 @@ fi
 if [ -n "$AUR_HELPER" ]; then
     command -v noctalia &>/dev/null || $AUR_HELPER -S --needed --noconfirm noctalia-bin || true
     command -v zen-browser &>/dev/null || $AUR_HELPER -S --needed --noconfirm zen-browser-bin || true
+    command -v tty-clock &>/dev/null || $AUR_HELPER -S --needed --noconfirm tty-clock || true
     if ! command -v codium &>/dev/null && ! command -v vscodium &>/dev/null; then
         $AUR_HELPER -S --needed --noconfirm vscodium-bin || true
     fi
 fi
 
 # directorios
-mkdir -p "$HOME/.config"/{niri,hypr,swaylock,rofi,noctalia,kitty,fastfetch,Kvantum}
+mkdir -p "$HOME/.config"/{niri,hypr,swaylock,rofi,noctalia,kitty,fastfetch,Kvantum,wireplumber/wireplumber.conf.d,opencode,pnpm}
 mkdir -p "$HOME/.config"/VSCodium/User "$HOME/.config"/"Antigravity IDE"/User
 mkdir -p "$HOME/.gemini/config/skills" "$HOME/.gemini/antigravity"
 mkdir -p "$HOME/.zsh" "$HOME/.local/bin" "$HOME/.local/share/applications"
@@ -114,6 +141,12 @@ install_file "$DOTFILES_DIR/Kvantum/kvantum.kvconfig" "$HOME/.config/Kvantum/kva
 install_file "$DOTFILES_DIR/dolphinrc" "$HOME/.config/dolphinrc"
 install_file "$DOTFILES_DIR/mimeapps.list" "$HOME/.config/mimeapps.list"
 
+# wireplumber, opencode y pnpm
+[ -f "$DOTFILES_DIR/wireplumber/wireplumber.conf.d/51-disable-hsp-hfp.conf" ] && install_file "$DOTFILES_DIR/wireplumber/wireplumber.conf.d/51-disable-hsp-hfp.conf" "$HOME/.config/wireplumber/wireplumber.conf.d/51-disable-hsp-hfp.conf"
+[ -f "$DOTFILES_DIR/opencode/sc-deepseek-overlay.json" ] && install_file "$DOTFILES_DIR/opencode/sc-deepseek-overlay.json" "$HOME/.config/opencode/sc-deepseek-overlay.json"
+[ -f "$DOTFILES_DIR/opencode/opencode.jsonc" ] && install_file "$DOTFILES_DIR/opencode/opencode.jsonc" "$HOME/.config/opencode/opencode.jsonc"
+[ -f "$DOTFILES_DIR/pnpm/config.yaml" ] && install_file "$DOTFILES_DIR/pnpm/config.yaml" "$HOME/.config/pnpm/config.yaml"
+
 # tema gtk (FlatColor dependia de pywal y dejaba las apps transparentes)
 install_file "$DOTFILES_DIR/gtk/settings.ini" "$HOME/.config/gtk-3.0/settings.ini"
 install_file "$DOTFILES_DIR/gtk/settings.ini" "$HOME/.config/gtk-4.0/settings.ini"
@@ -163,6 +196,7 @@ fi
 # scripts
 if [ -d "$DOTFILES_DIR/scripts" ]; then
     for script in "$DOTFILES_DIR/scripts"/*; do
+        [ -f "$script" ] || continue
         sname=$(basename "$script")
         cp -f "$script" "$HOME/.local/bin/$sname"
         chmod +x "$HOME/.local/bin/$sname"
@@ -182,13 +216,13 @@ fi
 
 # silentsddm si existe
 if [ -d "/usr/share/sddm/themes/SilentSDDM" ] && [ -f "$DOTFILES_DIR/sddm/default-left.conf" ]; then
-    if command -v sudo &>/dev/null; then
+    if [ "$CAN_SUDO" = true ]; then
         sudo cp -f "$DOTFILES_DIR/sddm/default-left.conf" "/usr/share/sddm/themes/SilentSDDM/configs/default-left.conf" 2>/dev/null || true
     fi
 fi
 
 # path
-for rfile in "$HOME/.zshrc" "$HOME/.bashrc"; do
+for rfile in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.zshenv"; do
     if [ -f "$rfile" ] && ! grep -q '\.local/bin' "$rfile"; then
         echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$rfile"
     fi
@@ -200,7 +234,7 @@ if command -v zsh &>/dev/null && [ "$SHELL" != "$(which zsh)" ]; then
 fi
 
 # bluetooth y wifi (rtl8821ce)
-if command -v sudo &>/dev/null; then
+if [ "$CAN_SUDO" = true ]; then
     conf=/etc/bluetooth/main.conf
     if [ -f "$conf" ]; then
         sudo sed -i -E 's/^[#[:space:]]*ControllerMode[[:space:]]*=.*/ControllerMode = bredr/' "$conf" 2>/dev/null || true
@@ -232,6 +266,8 @@ if command -v sudo &>/dev/null; then
         sudo cp -f "$DOTFILES_DIR/systemd/logind.conf.d/00-no-sleep.conf" /etc/systemd/logind.conf.d/00-no-sleep.conf 2>/dev/null || true
         sudo systemctl reload systemd-logind 2>/dev/null || true
     fi
+else
+    echo "aviso: sin permisos de root/sudo en este momento; se omiten configuraciones del sistema (/etc/)"
 fi
 
 # no cambiar a perfil headset en wireplumber

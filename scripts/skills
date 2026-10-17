@@ -1,16 +1,1 @@
-#!/usr/bin/env bash
-set -Eeuo pipefail
-
-REAL_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
-REAL_DIR="$(cd "$(dirname "${REAL_PATH}")" && pwd)"
-
-for c in \
-    "${REAL_DIR}/install-antigravity-skills.sh" \
-    "${REAL_DIR}/../skills/skills" \
-    "$HOME/MyDotfiles/skills/skills" \
-    "$HOME/Proyectos/SkillsAuto/skills"; do
-    if [[ -f "$c" ]]; then exec "$c" "$@"; fi
-done
-
-echo "no encuentro skills en ~/MyDotfiles/skills/" >&2
-exit 1
+../skills/skills

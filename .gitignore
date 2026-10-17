@@ -1,5 +1,5 @@
 # =============================================================================
-#   GITIGNORE
+#   GITIGNORE - DOTFILES (SEGURIDAD Y PRIVACIDAD BLINDADAS)
 # =============================================================================
 
 # --- HISTORIALES Y SESIONES ---
@@ -11,9 +11,14 @@
 .python_history
 .node_repl_history
 .gdb_history
+.viminfo
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# --- CREDENCIALES ---
+# --- CREDENCIALES Y SECRETOS ---
 *.pem
 *.key
 *.pub
@@ -21,14 +26,26 @@ id_rsa
 id_rsa.*
 id_ed25519
 id_ed25519.*
+id_ecdsa
+id_ecdsa.*
 *.keystore
 *.pfx
 *.p12
+*.kdbx
+*.gpg
+*.asc
 .env
 .env.*
 secrets.*
 *credentials*
 *.secret
+*token*
+*.token
+*auth.json*
+*service.json*
+.npmrc
+.pypirc
+.netrc
 
 # --- ARCHIVOS TEMPORALES Y RESPALDOS ---
 dotfiles_backup_*
@@ -36,6 +53,17 @@ dotfiles_backup_*
 *.tmp
 *.swp
 *~
+*.pid
+*.seed
+dockerlab_backups/
+
+# --- BASES DE DATOS Y RASTREADORES ---
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+Cookies*
+*session*
 
 # --- CACHES Y BINARIOS ---
 __pycache__/
