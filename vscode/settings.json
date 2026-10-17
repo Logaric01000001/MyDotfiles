@@ -15,5 +15,6 @@
     ],
     "kilo-code.new.agentWorkStyle": "autonomous",
     "kilo-code.new.showTaskTimeline": false,
-    "makefile.configureOnOpen": true
+    "makefile.configureOnOpen": true,
+    "clangd.path": "/home/logaric/.config/Antigravity IDE/User/globalStorage/llvm-vs-code-extensions.vscode-clangd/install/23.1.0/clangd_23.1.0/bin/clangd"
 }

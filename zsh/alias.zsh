@@ -38,8 +38,11 @@ alias disk='rsc __disk'
 # check updates
 
 # updates
+alias actualizacion='actualizacion'
+alias actualización='actualizacion'
+alias up='actualizacion'
+alias actu='actualizacion'
 alias dup='sudo zypper dup -y' # distro update for opensuse
-alias up='sysupdate.sh'
 
 # git alias
 alias add='git add .'
@@ -140,6 +143,5 @@ alias npm='pnpm'
 alias entrarmaquina='docker exec -it $1 zsh'
 alias server='python -m http.server 8000'
 alias antigravity='antigravity-ide'
-alias actu='sudo pacman -Syyu --disable-download-timeout'
 alias sc='cd ~/Documentos/Segundo-Cerebro && opencode'
 alias vpn='sudo openvpn $1'

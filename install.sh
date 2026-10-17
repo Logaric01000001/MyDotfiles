@@ -166,6 +166,7 @@ if [ -d "$DOTFILES_DIR/scripts" ]; then
         sname=$(basename "$script")
         cp -f "$script" "$HOME/.local/bin/$sname"
         chmod +x "$HOME/.local/bin/$sname"
+        [ -d "$HOME/.gemini/antigravity-ide/bin" ] && ln -sf "$HOME/.local/bin/$sname" "$HOME/.gemini/antigravity-ide/bin/$sname" 2>/dev/null || true
     done
 fi
 
@@ -173,6 +174,7 @@ fi
 if [ -d "$DOTFILES_DIR/skills" ]; then
     chmod +x "$DOTFILES_DIR/skills/skills" "$DOTFILES_DIR/skills/install-antigravity-skills.sh" 2>/dev/null || true
     ln -sf "$DOTFILES_DIR/skills/skills" "$HOME/.local/bin/skills"
+    [ -d "$HOME/.gemini/antigravity-ide/bin" ] && ln -sf "$DOTFILES_DIR/skills/skills" "$HOME/.gemini/antigravity-ide/bin/skills" 2>/dev/null || true
     if [ ! -e "$HOME/.gemini/antigravity/skills" ]; then
         ln -sf "$HOME/.gemini/config/skills" "$HOME/.gemini/antigravity/skills" 2>/dev/null || true
     fi
