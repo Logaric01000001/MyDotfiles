@@ -2,7 +2,15 @@
 
 Mis configuraciones para Arch Linux con el compositor Wayland Niri, barra Noctalia, Kitty y Zsh.
 
-## Instalacion
+## Instalación Rápida
+
+Puedes instalar y recuperar todo el entorno con un solo comando:
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Logaric01000001/MyDotfiles/main/install.sh)"
+```
+
+O clonando manualmente el repositorio:
 
 ```bash
 git clone https://github.com/Logaric01000001/MyDotfiles.git ~/MyDotfiles
@@ -11,28 +19,33 @@ chmod +x install.sh
 ./install.sh
 ```
 
-El script instala los paquetes necesarios, respalda archivos anteriores en `~/.config/dotfiles_backup_*` y copia las configuraciones.
+> **Recuperación tras `archinstall`**:
+> 1. Completa la instalación base con `archinstall` (crea tu usuario con privilegios `sudo`).
+> 2. Inicia sesión en tu usuario y ejecuta el comando de instalación.
+> 3. El script instala automáticamente los paquetes de Pacman y AUR, configura Wayland (Niri), pantalla de bloqueo (Hyprlock/Swaylock), barra (Noctalia), audio (Pipewire), Bluetooth, tema de inicio de sesión (SilentSDDM), fondo de pantalla y habilita los servicios para reiniciar directamente en el entorno gráfico.
 
 ## Estructura
 
 ```text
 MyDotfiles/
-├── config.kdl        # Configuracion de Niri
-├── install.sh        # Script de instalacion
-├── hyprlock.conf     # Bloqueo de pantalla
-├── swaylock.conf     # Bloqueo secundario
-├── dolphinrc         # Dolphin
-├── mimeapps.list     # Asociaciones de archivos
+├── config.kdl        # Configuración de Niri (Wayland compositor)
+├── install.sh        # Script de instalación y bootstrap automático
+├── hyprlock.conf     # Bloqueo de pantalla estético (Hyprlock)
+├── swaylock.conf     # Bloqueo secundario (Swaylock-effects)
+├── dolphinrc         # Ajustes de Dolphin File Manager
+├── mimeapps.list     # Asociaciones de archivos por defecto
 ├── Kvantum/          # Tema Qt KvArcDark
-├── kitty/            # Terminal Kitty
-├── rofi/             # Menu de aplicaciones
-├── noctalia/         # Barra y shell
-├── fastfetch/        # Informacion del sistema
-├── gtk/              # Tema GTK (Catppuccin)
-├── vscode/           # Ajustes de VS Code / Codium
-├── zsh/              # Zsh, alias y funciones
-├── scripts/          # Scripts en ~/.local/bin
-└── skills/           # Gestor de Agent Skills
+├── kitty/            # Terminal Kitty y temas
+├── rofi/             # Menú de aplicaciones y lanzador
+├── noctalia/         # Barra superior y widgets
+├── fastfetch/        # Información estética del sistema
+├── gtk/              # Tema GTK (Catppuccin Mocha)
+├── vscode/           # Ajustes de VS Code / Codium / Antigravity
+├── zsh/              # Zsh, alias limpios y funciones portables
+├── scripts/          # Scripts de utilidad en ~/.local/bin
+├── skills/           # Gestor de Agent Skills para IA
+├── gemini/           # Plantillas seguras de MCP para IA
+└── wallpapers/       # Fondos de pantalla predeterminados
 ```
 
 ## Atajos (Mod = Super/Windows)

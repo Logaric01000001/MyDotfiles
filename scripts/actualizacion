@@ -314,6 +314,11 @@ if [ "$SKIP_SYNC" = false ] && [ -d "$DOTFILES_DIR" ]; then
         for s in "$DOTFILES_DIR/scripts"/*; do
             [ -f "$s" ] || continue
             s_name=$(basename "$s")
+            [ "$s_name" = "skills" ] && continue
+            if [ -e "$HOME/.local/bin/$s_name" ] && [ "$(readlink -f "$s")" = "$(readlink -f "$HOME/.local/bin/$s_name")" ]; then
+                chmod +x "$HOME/.local/bin/$s_name"
+                continue
+            fi
             cp -f "$s" "$HOME/.local/bin/$s_name"
             chmod +x "$HOME/.local/bin/$s_name"
             [ -d "$HOME/.gemini/antigravity-ide/bin" ] && ln -sf "$HOME/.local/bin/$s_name" "$HOME/.gemini/antigravity-ide/bin/$s_name" 2>/dev/null || true

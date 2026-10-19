@@ -195,7 +195,7 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # Segundo Cerebro
 export SECOND_BRAIN="$HOME/Documentos/Segundo-Cerebro"
-alias dojo="python3 /home/logaric/Proyectos/Aprendiendo_Programacion/dojo.py"
+[ -f "$HOME/Proyectos/Aprendiendo_Programacion/dojo.py" ] && alias dojo="python3 $HOME/Proyectos/Aprendiendo_Programacion/dojo.py"
 
 export PNPM_HOME="$HOME/.local/share/pnpm"
 export PATH="$PNPM_HOME/bin:$PATH"

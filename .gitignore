@@ -34,6 +34,11 @@ id_ecdsa.*
 *.kdbx
 *.gpg
 *.asc
+*.ovpn
+*.crt
+*.csr
+*.p8
+*.pkcs12
 .env
 .env.*
 secrets.*
@@ -43,6 +48,8 @@ secrets.*
 *.token
 *auth.json*
 *service.json*
+*mcp_config.json
+!*mcp_config.json.example
 .npmrc
 .pypirc
 .netrc

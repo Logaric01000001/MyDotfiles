@@ -3,25 +3,38 @@ set -e
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if [ ! -f /etc/arch-release ]; then
-    echo "aviso: este script es para arch linux"
+# Si se ejecuta vía curl | bash o fuera del directorio del repositorio
+if [ ! -f "$DOTFILES_DIR/config.kdl" ]; then
+    DOTFILES_DIR="$HOME/MyDotfiles"
+    if [ ! -d "$DOTFILES_DIR/.git" ]; then
+        echo "==> Clonando MyDotfiles en $DOTFILES_DIR..."
+        if ! command -v git &>/dev/null; then
+            if command -v pacman &>/dev/null; then
+                sudo pacman -Sy --needed --noconfirm git
+            fi
+        fi
+        git clone https://github.com/Logaric01000001/MyDotfiles.git "$DOTFILES_DIR"
+    fi
 fi
 
-if [ -f /var/lib/pacman/db.lck ]; then
-    echo "pacman esta bloqueado (/var/lib/pacman/db.lck)"
-    exit 1
+if [ ! -f /etc/arch-release ]; then
+    echo "aviso: este script es para arch linux"
 fi
 
 PKGS=(
     base-devel git niri hyprlock swaylock swaybg swayidle
     rofi-wayland wl-mirror kitty dolphin fastfetch zsh
     starship eza zoxide fuzzel cliphist kvantum kvantum-qt5
-    pipewire wireplumber brightnessctl playerctl polkit-gnome
+    pipewire wireplumber pipewire-pulse pipewire-alsa brightnessctl playerctl polkit-gnome
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk
-    ttf-jetbrains-mono-nerd ttf-inter papirus-icon-theme
+    ttf-jetbrains-mono-nerd ttf-inter noto-fonts-emoji papirus-icon-theme
     wl-clipboard grim slurp
     bat btop fzf lazygit pacman-contrib lsof nwg-displays
-    networkmanager pnpm python
+    networkmanager bluez bluez-utils sddm
+    qt6-5compat qt6-declarative qt6-svg qt6-virtualkeyboard
+    xorg-xwayland xwayland-satellite
+    curl wget jq libnotify
+    pnpm python
 )
 
 OPT_NO_SUDO=false
@@ -48,10 +61,41 @@ if [ "$OPT_NO_SUDO" = false ] && command -v sudo &>/dev/null; then
     fi
 fi
 
+check_pacman_lock() {
+    if [ -f /var/lib/pacman/db.lck ]; then
+        local lck_pid
+        lck_pid=$(lsof -t /var/lib/pacman/db.lck 2>/dev/null || true)
+        if [ -n "$lck_pid" ] && ps -p "$lck_pid" >/dev/null 2>&1; then
+            echo "pacman ya está corriendo (PID: $lck_pid). Espera a que termine."
+            return 1
+        fi
+        echo "aviso: archivo de bloqueo huérfano (/var/lib/pacman/db.lck) detectado."
+        if [ "$OPT_YES" = true ]; then
+            sudo rm -f /var/lib/pacman/db.lck
+            echo "bloqueo huérfano eliminado automáticamente."
+        elif [ -t 0 ]; then
+            read -rp "¿Deseas eliminar el db.lck huérfano para continuar? [s/N]: " rm_lck
+            if [[ "$rm_lck" =~ ^[sS]$ ]]; then
+                sudo rm -f /var/lib/pacman/db.lck
+                echo "bloqueo huérfano eliminado."
+            else
+                echo "instalación de paquetes omitida por bloqueo de base de datos."
+                return 1
+            fi
+        else
+            echo "bloqueo huérfano presente en modo no interactivo; se omite instalación de paquetes."
+            return 1
+        fi
+    fi
+    return 0
+}
+
 echo "instalando paquetes..."
 if command -v pacman &>/dev/null; then
     if [ "$CAN_SUDO" = true ]; then
-        sudo pacman -S --needed --noconfirm "${PKGS[@]}" 2>/dev/null || true
+        if check_pacman_lock; then
+            sudo pacman -S --needed --noconfirm "${PKGS[@]}" 2>/dev/null || true
+        fi
     else
         echo "aviso: sin permisos de sudo inmediatos, se omiten paquetes de pacman que requieran root"
     fi
@@ -78,6 +122,9 @@ if [ -n "$AUR_HELPER" ]; then
     command -v tty-clock &>/dev/null || $AUR_HELPER -S --needed --noconfirm tty-clock || true
     if ! command -v codium &>/dev/null && ! command -v vscodium &>/dev/null; then
         $AUR_HELPER -S --needed --noconfirm vscodium-bin || true
+    fi
+    if ! pacman -Qi swaylock-effects &>/dev/null && ! pacman -Qi swaylock-effects-git &>/dev/null; then
+        $AUR_HELPER -S --needed --noconfirm swaylock-effects || true
     fi
 fi
 
@@ -198,10 +245,17 @@ if [ -d "$DOTFILES_DIR/scripts" ]; then
     for script in "$DOTFILES_DIR/scripts"/*; do
         [ -f "$script" ] || continue
         sname=$(basename "$script")
+        [ "$sname" = "skills" ] && continue
+        if [ -e "$HOME/.local/bin/$sname" ] && [ "$(readlink -f "$script")" = "$(readlink -f "$HOME/.local/bin/$sname")" ]; then
+            chmod +x "$HOME/.local/bin/$sname"
+            continue
+        fi
         cp -f "$script" "$HOME/.local/bin/$sname"
         chmod +x "$HOME/.local/bin/$sname"
         [ -d "$HOME/.gemini/antigravity-ide/bin" ] && ln -sf "$HOME/.local/bin/$sname" "$HOME/.gemini/antigravity-ide/bin/$sname" 2>/dev/null || true
     done
+    ln -sf "$HOME/.local/bin/set-wallpaper" "$HOME/.local/bin/set-wallpaper.sh" 2>/dev/null || true
+    ln -sf "$HOME/.local/bin/help-menu" "$HOME/.local/bin/help-menu.sh" 2>/dev/null || true
 fi
 
 # skills
@@ -209,16 +263,43 @@ if [ -d "$DOTFILES_DIR/skills" ]; then
     chmod +x "$DOTFILES_DIR/skills/skills" "$DOTFILES_DIR/skills/install-antigravity-skills.sh" 2>/dev/null || true
     ln -sf "$DOTFILES_DIR/skills/skills" "$HOME/.local/bin/skills"
     [ -d "$HOME/.gemini/antigravity-ide/bin" ] && ln -sf "$DOTFILES_DIR/skills/skills" "$HOME/.gemini/antigravity-ide/bin/skills" 2>/dev/null || true
+    mkdir -p "$HOME/.gemini/config/skills" "$HOME/.gemini/antigravity"
     if [ ! -e "$HOME/.gemini/antigravity/skills" ]; then
         ln -sf "$HOME/.gemini/config/skills" "$HOME/.gemini/antigravity/skills" 2>/dev/null || true
     fi
+    if [ -z "$(ls -A "$HOME/.gemini/config/skills" 2>/dev/null)" ]; then
+        echo "inicializando Agent Skills de Antigravity..."
+        bash "$DOTFILES_DIR/skills/install-antigravity-skills.sh" 2>/dev/null || true
+    fi
 fi
 
-# silentsddm si existe
-if [ -d "/usr/share/sddm/themes/SilentSDDM" ] && [ -f "$DOTFILES_DIR/sddm/default-left.conf" ]; then
-    if [ "$CAN_SUDO" = true ]; then
-        sudo cp -f "$DOTFILES_DIR/sddm/default-left.conf" "/usr/share/sddm/themes/SilentSDDM/configs/default-left.conf" 2>/dev/null || true
+# silentsddm y sddm setup
+if [ "$CAN_SUDO" = true ]; then
+    if [ ! -d "/usr/share/sddm/themes/SilentSDDM" ]; then
+        echo "instalando tema SilentSDDM para SDDM..."
+        sudo git clone --depth=1 https://github.com/uiriansan/SilentSDDM.git /usr/share/sddm/themes/SilentSDDM 2>/dev/null || true
     fi
+    if [ -d "/usr/share/sddm/themes/SilentSDDM" ]; then
+        [ -f "$DOTFILES_DIR/sddm/default-left.conf" ] && sudo cp -f "$DOTFILES_DIR/sddm/default-left.conf" "/usr/share/sddm/themes/SilentSDDM/configs/default-left.conf" 2>/dev/null || true
+        [ -f "$DOTFILES_DIR/wallpapers/default.jpg" ] && sudo cp -f "$DOTFILES_DIR/wallpapers/default.jpg" "/usr/share/sddm/themes/SilentSDDM/backgrounds/current_wallpaper.jpg" 2>/dev/null || true
+        sudo mkdir -p /etc/sddm.conf.d
+        printf '[Theme]\nCurrent=SilentSDDM\n[General]\nInputMethod=qtvirtualkeyboard\n' | sudo tee /etc/sddm.conf.d/10-theme.conf >/dev/null 2>&1 || true
+    fi
+fi
+
+# wallpaper predeterminado del sistema y escritorio
+mkdir -p "$HOME/Imágenes/Fondos"
+if [ -f "$DOTFILES_DIR/wallpapers/default.jpg" ]; then
+    [ ! -f "$HOME/Imágenes/Fondos/default.jpg" ] && cp -f "$DOTFILES_DIR/wallpapers/default.jpg" "$HOME/Imágenes/Fondos/default.jpg"
+    if [ ! -f "$HOME/.config/current_wallpaper" ]; then
+        cp -f "$DOTFILES_DIR/wallpapers/default.jpg" "$HOME/.config/current_wallpaper"
+    fi
+fi
+
+# plantilla segura de mcp para gemini si no existe
+if [ -f "$DOTFILES_DIR/gemini/mcp_config.json.example" ] && [ ! -f "$HOME/.gemini/config/mcp_config.json" ]; then
+    mkdir -p "$HOME/.gemini/config"
+    cp -n "$DOTFILES_DIR/gemini/mcp_config.json.example" "$HOME/.gemini/config/mcp_config.json" 2>/dev/null || true
 fi
 
 # path
@@ -266,6 +347,12 @@ if [ "$CAN_SUDO" = true ]; then
         sudo cp -f "$DOTFILES_DIR/systemd/logind.conf.d/00-no-sleep.conf" /etc/systemd/logind.conf.d/00-no-sleep.conf 2>/dev/null || true
         sudo systemctl reload systemd-logind 2>/dev/null || true
     fi
+
+    # habilitar servicios esenciales del sistema
+    echo "habilitando servicios esenciales (NetworkManager, bluetooth, sddm)..."
+    sudo systemctl enable NetworkManager.service 2>/dev/null || true
+    sudo systemctl enable bluetooth.service 2>/dev/null || true
+    sudo systemctl enable sddm.service 2>/dev/null || true
 else
     echo "aviso: sin permisos de root/sudo en este momento; se omiten configuraciones del sistema (/etc/)"
 fi
