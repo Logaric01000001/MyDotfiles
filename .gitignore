@@ -54,6 +54,13 @@ secrets.*
 .pypirc
 .netrc
 
+# --- HERRAMIENTAS DE IA (ESTADO LOCAL) ---
+.serena/
+opencode/registry/
+opencode/backups/
+opencode/node_modules/
+opencode/skills/
+
 # --- ARCHIVOS TEMPORALES Y RESPALDOS ---
 dotfiles_backup_*
 *.bak

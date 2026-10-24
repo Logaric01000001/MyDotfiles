@@ -43,10 +43,25 @@ MyDotfiles/
 ├── vscode/           # Ajustes de VS Code / Codium / Antigravity
 ├── zsh/              # Zsh, alias limpios y funciones portables
 ├── scripts/          # Scripts de utilidad en ~/.local/bin
+├── opencode/         # OpenCode V2: config, agentes, comandos y kit de MCP
 ├── skills/           # Gestor de Agent Skills para IA
 ├── gemini/           # Plantillas seguras de MCP para IA
 └── wallpapers/       # Fondos de pantalla predeterminados
 ```
+
+## OpenCode
+
+La configuración se instala en `~/.config/opencode`:
+
+- `opencode.jsonc`: configuración V2 (proveedores, permisos, MCP y agentes).
+- `agents/sc-*.md`: perfiles de agente por coste/capacidad (`sc-quick`, `sc-build`, `sc-deep`, `sc-review`, `sc-audit`, `sc-content`, `sc-local`).
+- `commands/`: comandos `/skill-*`, `/mcp-*`, `/content-*`, `/webn`, `/memoria`.
+- `kit/`: gestor `sc-kit` (`sc-kit list|add|test|profile`) y lanzadores de los MCP locales (GitHub, REA, Roblox Studio).
+- `AGENTS.md`: instrucciones globales del Segundo Cerebro.
+
+> Los MCP `playwright` y `chrome-devtools` usan `chromium`; el MCP de GitHub usa
+> `docker` + `gh auth login`; `rea` y `roblox-studio` requieren sus herramientas
+> opcionales (`~/opt`, Vinegar). Si faltan, el resto de MCP sigue funcionando.
 
 ## Atajos (Mod = Super/Windows)
 
@@ -74,3 +89,6 @@ MyDotfiles/
 - `display-mode.sh`: alterna entre extender pantalla, duplicar con wl-mirror o usar solo una pantalla.
 - `conectar-audifonos`: emparejamiento y conexion automatica de audifonos Bluetooth.
 - `fix-wifi-bluetooth.sh`: resuelve conflictos de WiFi y activa opciones estables para el chip Realtek RTL8821CE.
+- `sc-kit`: gestiona MCP y skills de OpenCode (`sc-kit list`, `sc-kit add`, `sc-kit test`, `sc-kit profile`).
+- `lock-screen` / `powermenu`: bloqueo y menu de apagado usados por los atajos de Niri.
+- `save-state` / `restore-state`: respaldo y restauracion rapida de configuraciones.

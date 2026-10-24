@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec python3 "__HOME__/.config/opencode/sc-ultimate/sc_ultimate_launcher.py" "$@"

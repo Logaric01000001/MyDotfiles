@@ -1,27 +1,289 @@
 {
   "$schema": "https://opencode.ai/config.json",
-
-  "provider": {
+  "model": "opencode-go/deepseek-v4.1-flash",
+  "default_agent": "sc-build",
+  "share": "disabled",
+  "update": "notify",
+  "providers": {
     "ollama": {
-      "npm": "@ai-sdk/openai-compatible",
       "name": "Ollama",
-      "options": {
-        "baseURL": "http://localhost:11434/v1"
+      "settings": {
+        "baseURL": "http://127.0.0.1:11434/v1"
       },
       "models": {
         "qwen3:4b": {
-          "name": "Qwen3 4B"
+          "name": "Qwen3 4B (local, tools)"
         },
         "gemma3:4b": {
-          "name": "Gemma 3 4B"
-	},
+          "name": "Gemma 3 4B (local)",
+          "limit": {
+            "context": 32768,
+            "output": 8192
+          }
+        },
         "phi4-mini:3.8b": {
-          "name": "Phi 4 Mini 3.8B"
+          "name": "Phi 4 Mini 3.8B (local)"
         },
         "qwen2.5-coder:1.5b": {
-          "name": "Qwen 2.5 Coder 1.5B (Rápido + Tools)"
+          "name": "Qwen 2.5 Coder 1.5B (local, rápido)"
         }
       }
+    }
+  },
+  "compaction": {
+    "auto": true,
+    "keep": {
+      "tokens": 12000
+    },
+    "buffer": 20000
+  },
+  "tool_output": {
+    "max_lines": 1500,
+    "max_bytes": 40960
+  },
+  "watcher": {
+    "ignore": [
+      "**/node_modules/**",
+      "**/.git/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/.next/**",
+      "**/coverage/**",
+      "**/.venv/**",
+      "**/__pycache__/**",
+      "**/*.db-wal",
+      "**/*.db-shm",
+      "**/backups/**",
+      "**/out/**"
+    ]
+  },
+  "experimental": {
+    "background_compaction": true,
+    "todo": true
+  },
+  "permissions": [
+    {
+      "action": "*",
+      "resource": "*",
+      "effect": "allow"
+    },
+    {
+      "action": "read",
+      "resource": "*.env",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*.env.*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "~/.ssh/*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "~/.aws/*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "~/.gnupg/*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "~/.local/share/opencode/auth.json",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "~/.config/opencode/auth.json",
+      "effect": "deny"
+    },
+    {
+      "action": "edit",
+      "resource": "~/.local/share/opencode/auth.json",
+      "effect": "deny"
+    },
+    {
+      "action": "edit",
+      "resource": "~/.config/opencode/auth.json",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*.env.example",
+      "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "sudo *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -rf /",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -rf ~",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -fr /",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -fr ~",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -rf --no-preserve-root*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "rm -rf $HOME",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "mkfs*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "dd *of=/dev/*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "shutdown*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "reboot*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git push --force*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "git push -f *",
+      "effect": "deny"
+    },
+    {
+      "action": "subagent",
+      "resource": "*",
+      "effect": "ask"
+    },
+    {
+      "action": "rea_*",
+      "resource": "*",
+      "effect": "ask"
+    }
+  ],
+  "mcp": {
+    "timeout": {
+      "startup": 30000,
+      "catalog": 30000,
+      "execution": 600000
+    },
+    "servers": {
+      "context7": {
+        "type": "remote",
+        "url": "https://mcp.context7.com/mcp"
+      },
+      "canva": {
+        "type": "remote",
+        "url": "https://mcp.canva.com/mcp"
+      },
+      "roblox-studio": {
+        "type": "local",
+        "command": [
+          "__HOME__/.config/opencode/kit/roblox-studio-mcp.sh"
+        ]
+      },
+      "notion": {
+        "type": "remote",
+        "url": "https://mcp.notion.com/mcp"
+      },
+      "playwright": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@playwright/mcp@latest",
+          "--executable-path",
+          "/usr/bin/chromium",
+          "--headless",
+          "--isolated"
+        ]
+      },
+      "chrome-devtools": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "chrome-devtools-mcp@latest",
+          "--executablePath",
+          "/usr/bin/chromium",
+          "--headless",
+          "--isolated",
+          "--no-usage-statistics",
+          "--screenshotFormat",
+          "jpeg",
+          "--screenshotMaxWidth",
+          "1568"
+        ]
+      },
+      "serena": {
+        "type": "local",
+        "command": [
+          "serena",
+          "start-mcp-server",
+          "--context",
+          "codex",
+          "--project-from-cwd",
+          "--enable-web-dashboard",
+          "false",
+          "--open-web-dashboard",
+          "false"
+        ]
+      },
+      "github": {
+        "type": "local",
+        "command": [
+          "__HOME__/.config/opencode/kit/github-mcp.sh"
+        ]
+      },
+      "rea": {
+        "type": "local",
+        "command": [
+          "__HOME__/.config/opencode/kit/rea-mcp.sh"
+        ]
+      }
+    }
+  },
+  "agents": {
+    "compaction": {
+      "model": "opencode-go/claude-haiku-5-5"
+    },
+    "title": {
+      "model": "opencode-go/claude-haiku-5-5"
+    },
+    "summary": {
+      "model": "opencode-go/claude-haiku-5-5"
     }
   }
 }

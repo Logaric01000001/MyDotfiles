@@ -1,0 +1,84 @@
+{
+  "profiles": {
+    "minimal": [],
+    "web": [
+      "context7",
+      "playwright",
+      "chrome-devtools"
+    ],
+    "code": [
+      "context7",
+      "github",
+      "filesystem",
+      "git",
+      "sequential-thinking"
+    ],
+    "design": [
+      "figma",
+      "canva",
+      "playwright",
+      "context7"
+    ],
+    "content": [
+      "context7",
+      "playwright",
+      "figma",
+      "canva",
+      "fetch"
+    ],
+    "devops": [
+      "context7",
+      "github",
+      "filesystem",
+      "sentry"
+    ],
+    "security": [
+      "context7",
+      "filesystem",
+      "git",
+      "fetch"
+    ],
+    "todo": [
+      "canva",
+      "chrome-devtools",
+      "context7",
+      "github",
+      "notion",
+      "playwright",
+      "roblox-studio",
+      "serena"
+    ],
+    "trabajo": [
+      "notion",
+      "context7"
+    ],
+    "diseno": [
+      "canva",
+      "context7"
+    ],
+    "juegos": [
+      "roblox-studio",
+      "context7"
+    ],
+    "dev": [
+      "context7",
+      "github",
+      "playwright",
+      "chrome-devtools",
+      "serena"
+    ],
+    "social": [
+      "canva",
+      "notion",
+      "context7"
+    ],
+    "roblox": [
+      "roblox-studio",
+      "context7"
+    ],
+    "re": [
+      "rea",
+      "context7"
+    ]
+  }
+}

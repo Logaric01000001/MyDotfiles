@@ -27,14 +27,16 @@ PKGS=(
     starship eza zoxide fuzzel cliphist kvantum kvantum-qt5
     pipewire wireplumber pipewire-pulse pipewire-alsa brightnessctl playerctl polkit-gnome
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk
-    ttf-jetbrains-mono-nerd ttf-inter noto-fonts-emoji papirus-icon-theme
+    ttf-jetbrains-mono-nerd inter-font noto-fonts-emoji papirus-icon-theme
     wl-clipboard grim slurp
     bat btop fzf lazygit pacman-contrib lsof nwg-displays
     networkmanager bluez bluez-utils sddm
     qt6-5compat qt6-declarative qt6-svg qt6-virtualkeyboard
     xorg-xwayland xwayland-satellite
     curl wget jq libnotify
-    pnpm python
+    pnpm python uv nodejs npm
+    # dependencias de los MCP de OpenCode (kit)
+    chromium docker github-cli
 )
 
 OPT_NO_SUDO=false
@@ -188,11 +190,45 @@ install_file "$DOTFILES_DIR/Kvantum/kvantum.kvconfig" "$HOME/.config/Kvantum/kva
 install_file "$DOTFILES_DIR/dolphinrc" "$HOME/.config/dolphinrc"
 install_file "$DOTFILES_DIR/mimeapps.list" "$HOME/.config/mimeapps.list"
 
-# wireplumber, opencode y pnpm
+# wireplumber y pnpm
 [ -f "$DOTFILES_DIR/wireplumber/wireplumber.conf.d/51-disable-hsp-hfp.conf" ] && install_file "$DOTFILES_DIR/wireplumber/wireplumber.conf.d/51-disable-hsp-hfp.conf" "$HOME/.config/wireplumber/wireplumber.conf.d/51-disable-hsp-hfp.conf"
-[ -f "$DOTFILES_DIR/opencode/sc-deepseek-overlay.json" ] && install_file "$DOTFILES_DIR/opencode/sc-deepseek-overlay.json" "$HOME/.config/opencode/sc-deepseek-overlay.json"
-[ -f "$DOTFILES_DIR/opencode/opencode.jsonc" ] && install_file "$DOTFILES_DIR/opencode/opencode.jsonc" "$HOME/.config/opencode/opencode.jsonc"
 [ -f "$DOTFILES_DIR/pnpm/config.yaml" ] && install_file "$DOTFILES_DIR/pnpm/config.yaml" "$HOME/.config/pnpm/config.yaml"
+
+# opencode (config V2 nativa + kit, agentes, comandos y docs)
+if [ -d "$DOTFILES_DIR/opencode" ]; then
+    mkdir -p "$HOME/.config/opencode"
+    install_file "$DOTFILES_DIR/opencode/AGENTS.md" "$HOME/.config/opencode/AGENTS.md"
+    install_file "$DOTFILES_DIR/opencode/KIT.md" "$HOME/.config/opencode/KIT.md"
+    [ -f "$DOTFILES_DIR/opencode/sc-deepseek-overlay.json" ] && install_file "$DOTFILES_DIR/opencode/sc-deepseek-overlay.json" "$HOME/.config/opencode/sc-deepseek-overlay.json"
+
+    # la config referencia los scripts del kit por ruta absoluta: se hace portable
+    if [ -f "$DOTFILES_DIR/opencode/opencode.jsonc" ]; then
+        install_file "$DOTFILES_DIR/opencode/opencode.jsonc" "$HOME/.config/opencode/opencode.jsonc"
+        sed -i -e "s|__HOME__|$HOME|g" -e "s|/home/logaric|$HOME|g" "$HOME/.config/opencode/opencode.jsonc"
+    fi
+
+    for odir in kit agents commands; do
+        if [ -d "$DOTFILES_DIR/opencode/$odir" ]; then
+            mkdir -p "$HOME/.config/opencode/$odir"
+            cp -Rf "$DOTFILES_DIR/opencode/$odir/." "$HOME/.config/opencode/$odir/"
+        fi
+    done
+    find "$HOME/.config/opencode/kit" -name '*.sh' -exec chmod +x {} \; 2>/dev/null || true
+    chmod +x "$HOME/.config/opencode/kit/sc_kit.py" 2>/dev/null || true
+    ln -sf "$HOME/.config/opencode/kit/sc_kit.py" "$HOME/.local/bin/sc-kit"
+
+    # lanzador legado sc-ultimate (overlay V1)
+    if [ -d "$DOTFILES_DIR/opencode/sc-ultimate" ]; then
+        mkdir -p "$HOME/.config/opencode/sc-ultimate"
+        cp -Rf "$DOTFILES_DIR/opencode/sc-ultimate/." "$HOME/.config/opencode/sc-ultimate/"
+        rm -f "$HOME/.config/opencode/sc-ultimate/sc-ultimate"
+        if [ -f "$DOTFILES_DIR/opencode/sc-ultimate/sc-ultimate" ]; then
+            install_file "$DOTFILES_DIR/opencode/sc-ultimate/sc-ultimate" "$HOME/.local/bin/sc-ultimate"
+            sed -i -e "s|__HOME__|$HOME|g" -e "s|/home/logaric|$HOME|g" "$HOME/.local/bin/sc-ultimate"
+            chmod +x "$HOME/.local/bin/sc-ultimate"
+        fi
+    fi
+fi
 
 # tema gtk (FlatColor dependia de pywal y dejaba las apps transparentes)
 install_file "$DOTFILES_DIR/gtk/settings.ini" "$HOME/.config/gtk-3.0/settings.ini"
@@ -353,6 +389,10 @@ if [ "$CAN_SUDO" = true ]; then
     sudo systemctl enable NetworkManager.service 2>/dev/null || true
     sudo systemctl enable bluetooth.service 2>/dev/null || true
     sudo systemctl enable sddm.service 2>/dev/null || true
+    # docker: lo usa el MCP de GitHub del kit de OpenCode
+    if command -v docker &>/dev/null; then
+        sudo systemctl enable --now docker.service 2>/dev/null || true
+    fi
 else
     echo "aviso: sin permisos de root/sudo en este momento; se omiten configuraciones del sistema (/etc/)"
 fi
