@@ -4,6 +4,9 @@
   "default_agent": "sc-build",
   "share": "disabled",
   "update": "notify",
+  "plugins": [
+    "__HOME__/.config/opencode/plugins/gaslight"
+  ],
   "providers": {
     "ollama": {
       "name": "Ollama",

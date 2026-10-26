@@ -37,6 +37,9 @@ PKGS=(
     pnpm python uv nodejs npm
     # dependencias de los MCP de OpenCode (kit)
     chromium docker github-cli
+    # laboratorio wifi/usb
+    usb_modeswitch usbutils net-tools wireless_tools ethtool xorg-xhost
+    aircrack-ng hcxdumptool hcxtools reaver
 )
 
 OPT_NO_SUDO=false
@@ -128,6 +131,11 @@ if [ -n "$AUR_HELPER" ]; then
     if ! pacman -Qi swaylock-effects &>/dev/null && ! pacman -Qi swaylock-effects-git &>/dev/null; then
         $AUR_HELPER -S --needed --noconfirm swaylock-effects || true
     fi
+    command -v antena &>/dev/null || $AUR_HELPER -S --needed --noconfirm antena-arch || true
+    # aic8800-fdrv-dkms solo tiene sentido con el adaptador USB AIC8800 conectado
+    if lsusb 2>/dev/null | grep -qi 'aic8800'; then
+        $AUR_HELPER -S --needed --noconfirm aic8800-fdrv-dkms || true
+    fi
 fi
 
 # directorios
@@ -206,6 +214,16 @@ if [ -d "$DOTFILES_DIR/opencode" ]; then
         install_file "$DOTFILES_DIR/opencode/opencode.jsonc" "$HOME/.config/opencode/opencode.jsonc"
         sed -i -e "s|__HOME__|$HOME|g" -e "s|/home/logaric|$HOME|g" "$HOME/.config/opencode/opencode.jsonc"
     fi
+    if [ -f "$DOTFILES_DIR/opencode/cli.json" ]; then
+        install_file "$DOTFILES_DIR/opencode/cli.json" "$HOME/.config/opencode/cli.json"
+        sed -i -e "s|__HOME__|$HOME|g" -e "s|/home/logaric|$HOME|g" "$HOME/.config/opencode/cli.json"
+    fi
+
+    # plugins locales (gaslight)
+    if [ -d "$DOTFILES_DIR/opencode/plugins" ]; then
+        mkdir -p "$HOME/.config/opencode/plugins"
+        cp -Rf "$DOTFILES_DIR/opencode/plugins/." "$HOME/.config/opencode/plugins/"
+    fi
 
     for odir in kit agents commands; do
         if [ -d "$DOTFILES_DIR/opencode/$odir" ]; then
@@ -274,6 +292,24 @@ fi
 # makepkg.conf
 if [ -f "$DOTFILES_DIR/makepkg.conf" ]; then
     ln -sf "$DOTFILES_DIR/makepkg.conf" "$HOME/.makepkg.conf"
+fi
+
+# gitconfig (identidad noreply, sin credenciales: usa gh auth)
+if [ -f "$DOTFILES_DIR/gitconfig" ]; then
+    install_file "$DOTFILES_DIR/gitconfig" "$HOME/.gitconfig"
+    sed -i -e "s|__HOME__|$HOME|g" -e "s|/home/logaric|$HOME|g" "$HOME/.gitconfig"
+fi
+
+# opencode-unguarded (perfil aislado; el binario de ~200 MB no se versiona)
+if [ -f "$DOTFILES_DIR/opencode-unguarded/opencode-unguarded" ]; then
+    install_file "$DOTFILES_DIR/opencode-unguarded/opencode-unguarded" "$HOME/.local/bin/opencode-unguarded"
+    sed -i -e "s|__HOME__|$HOME|g" -e "s|/home/logaric|$HOME|g" "$HOME/.local/bin/opencode-unguarded"
+    chmod +x "$HOME/.local/bin/opencode-unguarded"
+    if [ -f "$DOTFILES_DIR/opencode-unguarded/opencode.jsonc" ]; then
+        mkdir -p "$HOME/.config/opencode-unguarded/opencode"
+        install_file "$DOTFILES_DIR/opencode-unguarded/opencode.jsonc" "$HOME/.config/opencode-unguarded/opencode/opencode.jsonc"
+    fi
+    [ -x "$HOME/.local/bin/opencode-unguarded.bin" ] || echo "aviso: falta ~/.local/bin/opencode-unguarded.bin (binario no incluido en el repo)"
 fi
 
 # scripts

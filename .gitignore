@@ -60,6 +60,9 @@ opencode/registry/
 opencode/backups/
 opencode/node_modules/
 opencode/skills/
+opencode/plugins/**/node_modules/
+opencode-unguarded/opencode/node_modules/
+opencode-unguarded/.android/
 
 # --- ARCHIVOS TEMPORALES Y RESPALDOS ---
 dotfiles_backup_*

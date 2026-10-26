@@ -1,0 +1,12 @@
+[user]
+	name = Log4ric
+	email = 198108252+Logaric01000001@users.noreply.github.com
+[credential "https://github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential
+[safe]
+	directory = __HOME__/.local/share/umbral-toolchain/flutter
+	directory = __HOME__/.local/share/umbral-toolchain/flutter

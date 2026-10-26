@@ -43,7 +43,9 @@ MyDotfiles/
 ├── vscode/           # Ajustes de VS Code / Codium / Antigravity
 ├── zsh/              # Zsh, alias limpios y funciones portables
 ├── scripts/          # Scripts de utilidad en ~/.local/bin
-├── opencode/         # OpenCode V2: config, agentes, comandos y kit de MCP
+├── opencode/         # OpenCode V2: config, agentes, comandos, kit y plugins
+├── opencode-unguarded/ # Perfil aislado de OpenCode (lanzador, sin binario)
+├── gitconfig         # Identidad git noreply + credenciales vía gh
 ├── skills/           # Gestor de Agent Skills para IA
 ├── gemini/           # Plantillas seguras de MCP para IA
 └── wallpapers/       # Fondos de pantalla predeterminados
@@ -57,11 +59,18 @@ La configuración se instala en `~/.config/opencode`:
 - `agents/sc-*.md`: perfiles de agente por coste/capacidad (`sc-quick`, `sc-build`, `sc-deep`, `sc-review`, `sc-audit`, `sc-content`, `sc-local`).
 - `commands/`: comandos `/skill-*`, `/mcp-*`, `/content-*`, `/webn`, `/memoria`.
 - `kit/`: gestor `sc-kit` (`sc-kit list|add|test|profile`) y lanzadores de los MCP locales (GitHub, REA, Roblox Studio).
+- `plugins/gaslight/`: plugin local que reescribe una respuesta del asistente para las peticiones futuras (comando `/gaslight`).
+- `cli.json`: preferencias del TUI (diffs, sidebar, animaciones).
 - `AGENTS.md`: instrucciones globales del Segundo Cerebro.
 
 > Los MCP `playwright` y `chrome-devtools` usan `chromium`; el MCP de GitHub usa
 > `docker` + `gh auth login`; `rea` y `roblox-studio` requieren sus herramientas
 > opcionales (`~/opt`, Vinegar). Si faltan, el resto de MCP sigue funcionando.
+
+`opencode-unguarded` es un perfil totalmente aislado (`XDG_CONFIG_HOME`,
+`XDG_DATA_HOME` y `XDG_CACHE_HOME` propios) para una build 1.19.4 sin
+guardarraíles. El repositorio solo guarda el lanzador y su config; el binario
+`~/.local/bin/opencode-unguarded.bin` (~200 MB) no se versiona.
 
 ## Atajos (Mod = Super/Windows)
 
@@ -92,3 +101,5 @@ La configuración se instala en `~/.config/opencode`:
 - `sc-kit`: gestiona MCP y skills de OpenCode (`sc-kit list`, `sc-kit add`, `sc-kit test`, `sc-kit profile`).
 - `lock-screen` / `powermenu`: bloqueo y menu de apagado usados por los atajos de Niri.
 - `save-state` / `restore-state`: respaldo y restauracion rapida de configuraciones.
+- `antena`: asistente gráfico (AUR `antena-arch`) para adaptadores Wi-Fi USB; el instalador añade `aircrack-ng`, `hcxdumptool`, `hcxtools`, `reaver`, `usb_modeswitch` y `ethtool` para el laboratorio.
+- `opencode-unguarded`: arranca el perfil aislado de OpenCode (requiere el binario aparte).
