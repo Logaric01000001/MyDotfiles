@@ -57,9 +57,11 @@ La configuración se instala en `~/.config/opencode`:
 
 - `opencode.jsonc`: configuración V2 (proveedores, permisos, MCP y agentes).
 - `agents/sc-*.md`: perfiles de agente por coste/capacidad (`sc-quick`, `sc-build`, `sc-deep`, `sc-review`, `sc-audit`, `sc-content`, `sc-local`).
-- `commands/`: comandos `/skill-*`, `/mcp-*`, `/content-*`, `/webn`, `/memoria`.
+- `agents/studio*.md`: estudio web (`studio` coordina y delega en `studio-director`, `studio-builder`, `studio-engineer` y `studio-critic`).
+- `commands/`: comandos `/skill-*`, `/mcp-*`, `/content-*`, `/web`, `/web-premium`, `/impeccable`, `/webn`, `/memoria`.
 - `kit/`: gestor `sc-kit` (`sc-kit list|add|test|profile`) y lanzadores de los MCP locales (GitHub, REA, Roblox Studio).
 - `plugins/gaslight/`: plugin local que reescribe una respuesta del asistente para las peticiones futuras (comando `/gaslight`).
+- `plugins/mcp-retry/`: reintenta servidores MCP que fallan al arrancar (p. ej. un 409 transitorio de Canva).
 - `cli.json`: preferencias del TUI (diffs, sidebar, animaciones).
 - `AGENTS.md`: instrucciones globales del Segundo Cerebro.
 

@@ -1,0 +1,13 @@
+{
+  "name": "opencode-mcp-retry",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Retries MCP servers that fail to connect during startup (for example a transient HTTP 409 from the remote endpoint) instead of leaving them failed for the whole session.",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "peerDependencies": {
+    "@opencode/plugin": "*"
+  }
+}

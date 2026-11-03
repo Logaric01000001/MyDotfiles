@@ -17,8 +17,23 @@ alias susegrub="sudo grub2-mkconfig -o /boot/grub2/grub.cfg"    # opensuse
 alias fedbup="sudo grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg" # fedora
 alias ..='cd ..'    # go back
 alias ...='cd ../..'    # go back 2 steps
-alias .='cd /'  # go to root dir
-command -v zoxide >/dev/null 2>&1 && alias cd='z'
+# Ojo: no definir "alias .='cd /'". El punto es el builtin que hace
+# "source" (por ejemplo ". archivo.sh") y romperlo provoca errores como
+# "zoxide: no match found" al abrir la terminal.
+
+# cd usa zoxide, pero conserva el comportamiento normal de cd:
+# sin argumentos va al home, "cd -" vuelve al directorio anterior.
+if command -v zoxide >/dev/null 2>&1; then
+    cd() {
+        if (( $# == 0 )); then
+            builtin cd "$HOME"
+        elif [[ "$1" == "-" ]]; then
+            builtin cd -
+        else
+            z "$@"
+        fi
+    }
+fi
 
 # other
 alias src='source ~/.zsh/.zshrc' #source .bashrc

@@ -40,6 +40,9 @@ PKGS=(
     # laboratorio wifi/usb
     usb_modeswitch usbutils net-tools wireless_tools ethtool xorg-xhost
     aircrack-ng hcxdumptool hcxtools reaver
+    # desarrollo y sistema
+    go ninja meson ast-grep chrpath asar python-tqdm
+    age socat cronie run-parts cloudflared
 )
 
 OPT_NO_SUDO=false

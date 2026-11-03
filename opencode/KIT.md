@@ -386,3 +386,73 @@ causó el kit (sus datos ocupan ~10 MB); conviene revisar `~/.cache/paru`.
   después sin tocar el resto.
 - El render es CPU: vídeos largos tardan proporcionalmente más.
 - Los precios mostrados son del catálogo, no una factura.
+
+---
+
+## 11. Sistema de diseño web premium (2026-10-29)
+
+Instalado sobre OpenCode 2.1.3 (V2). No sustituye nada existente: WEBN,
+`interface-craft`, SC, Playwright, Chrome DevTools y el resto siguen igual.
+
+### Skills instaladas (globales, `~/.config/opencode/skills/`)
+
+| Skill | Origen | Uso |
+|---|---|---|
+| `impeccable` | pbakaus/impeccable (Apache 2.0) | Dirección de arte, crítica, auditoría y pulido |
+| `frontend-design` | anthropics/skills | Identidad visual propia al crear interfaces |
+| `ui-ux-pro-max` | nextlevelbuilder/ui-ux-pro-max-skill (MIT) | Biblioteca local: estilos, paletas, tipografía, UX, stacks |
+| `web-design-guidelines` | vercel-labs/agent-skills | Revisión de accesibilidad, formularios, estados, imágenes |
+| `react-best-practices` | vercel-labs/agent-skills (MIT) | Rendimiento React/Next, solo cuando aplica |
+| `web-premium` | propia (orquestador) | Flujo en 6 fases y reglas de uso |
+
+### Comandos
+
+**No hacen falta.** Las skills se activan solas con lenguaje natural: pide
+"hazme una web para mi floristería" y el agente carga `web-premium` y empieza.
+El enrutado por intención está en `AGENTS.md` (sección DISEÑO WEB).
+
+Atajos opcionales, para forzar algo concreto:
+
+- `/web-premium <petición>` — fuerza el flujo completo de 6 fases.
+- `/impeccable <comando> [objetivo]` — `init`, `document`, `shape`, `critique`,
+  `audit`, `polish`, `bolder`, `quieter`, `typeset`, `layout`, `animate`,
+  `harden`, `optimize`, `live`, `doctor`.
+
+### MCP
+
+- `shadcn` (nuevo, global): binario `~/.local/share/pnpm/bin/shadcn mcp`.
+  Configurado en `opencode.jsonc` → `mcp.servers.shadcn`.
+- `context7`, `playwright`, `chrome-devtools`: ya existían y se conservan.
+- `21st MCP` — **opcional, no instalado**. Requiere API key propia desde
+  https://21st.dev/mcp y `get_component` es recuperación de pago. Sin clave no
+  funciona; añadirlo solo si se obtiene clave:
+  `opencode mcp add 21st --global --url https://21st.dev/api/mcp --header "Authorization=Bearer {env:TWENTYFIRST_API_KEY}"`
+
+### Detector de Impeccable (sin agente)
+
+```bash
+npx impeccable detect src/
+npx impeccable detect http://localhost:5173
+npx impeccable detect --list-rules
+```
+
+Binario local ya descargado en
+`~/.config/opencode/skills/impeccable/scripts/bin/linux-x64/impeccable`
+(v0.1.18). Hooks automáticos: **no disponibles en OpenCode**; el detector se
+ejecuta a mano o desde `/web-premium`.
+
+### Actualizar
+
+```bash
+npx impeccable update --providers=opencode --scope=global   # reescribe commands/impeccable.md
+pnpm update -g shadcn ui-ux-pro-max-cli
+
+# ui-ux-pro-max: su CLI instala en ~/.opencode/skills (no lo descubre OpenCode V2).
+# Actualizar en un directorio temporal y copiar el núcleo:
+cd "$(mktemp -d)" && uipro init --ai opencode --global \
+  && cp -r ~/.opencode/skills/ui-ux-pro-max ~/.config/opencode/skills/ \
+  && python3 ~/.config/opencode/skills/ui-ux-pro-max/scripts/search.py "saas" --design-system | head -5
+```
+
+Tras actualizar Impeccable, revisar `~/.config/opencode/commands/impeccable.md`:
+el instalador lo sobrescribe con `agent: build` y `subtask: true`.
