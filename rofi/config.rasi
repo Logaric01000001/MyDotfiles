@@ -14,7 +14,7 @@ configuration {
     drun-display-format:    "{name}";
     drun-match-fields:      "name,generic,exec,categories,keywords";
     matching:               "fuzzy";
-    sorting-method:         "fuzzy";
+    sorting-method:         "fzf";
     sort:                   true;
     case-sensitive:         false;
     cycle:                  true;
