@@ -160,9 +160,10 @@ confirm() {
 # -----------------------------------------------------------------------------
 # Categorías
 # -----------------------------------------------------------------------------
-CATS=(paquetes journal temporales papelera cache dev docker flatpak navegadores)
+CATS=(paquetes huerfanos journal temporales papelera cache dev docker flatpak navegadores)
 declare -A DESC=(
-    [paquetes]="Caché de pacman (2 versiones) y huérfanos"
+    [paquetes]="Caché de pacman (conserva 2 versiones)"
+    [huerfanos]="Paquetes huérfanos (revisar antes de borrar)"
     [journal]="Journal de systemd hasta 200 MB"
     [temporales]="Archivos viejos de /tmp, /var/tmp y miniaturas"
     [papelera]="Papelera de reciclaje (>30 días)"
@@ -176,6 +177,7 @@ declare -A DESC=(
 measure() {
     case "$1" in
         paquetes)    size_bytes /var/cache/pacman/pkg ;;
+        huerfanos)   echo 0 ;;
         journal)     size_bytes /var/log/journal ;;
         temporales)  sum_sizes /tmp /var/tmp "$HOME/.cache/thumbnails" "$HOME/.cache/fontconfig" ;;
         papelera)    sum_sizes "$HOME/.local/share/Trash/files" "$HOME/.local/share/Trash/info" ;;
@@ -199,15 +201,20 @@ cat_paquetes() {
     else
         run "pacman -Sc" sudo pacman -Sc --noconfirm
     fi
+}
+
+cat_huerfanos() {
     local -a orphans=()
     mapfile -t orphans < <(pacman -Qtdq 2>/dev/null || true)
-    if [ "${#orphans[@]}" -gt 0 ]; then
-        warn "paquetes huérfanos: ${#orphans[@]}"
-        if confirm "¿Eliminar los ${#orphans[@]} paquetes huérfanos?"; then
-            run "pacman -Rns: ${#orphans[@]} huérfanos" sudo pacman -Rns --noconfirm "${orphans[@]}"
-        fi
-    else
+    if [ "${#orphans[@]}" -eq 0 ]; then
         info "sin paquetes huérfanos"
+        return 0
+    fi
+    warn "paquetes huérfanos: ${#orphans[@]}"
+    printf '  %s\n' "${orphans[@]}"
+    need_root || return 0
+    if confirm "¿Eliminar los ${#orphans[@]} paquetes huérfanos?"; then
+        run "pacman -Rns: ${#orphans[@]} huérfanos" sudo pacman -Rns --noconfirm "${orphans[@]}"
     fi
 }
 
@@ -343,7 +350,7 @@ select_categories() {
 # -----------------------------------------------------------------------------
 # Argumentos
 # -----------------------------------------------------------------------------
-DRY=0; ASSUME=0; ALL=0; REPORT=0; DOCKER_ALL=0; TRASH_ALL=0; ONLY=""
+DRY=0; ASSUME=0; ALL=0; REPORT=0; DOCKER_ALL=0; TRASH_ALL=0; ONLY=""; NOTIFY=0
 declare -a SELECTED=()
 
 usage() {
@@ -365,10 +372,11 @@ Opciones:
   --only LISTA     categorías separadas por comas
   --docker-all     además borra imágenes Docker no usadas (no volúmenes)
   --trash-all      vacía la papelera completa (por defecto >30 días)
+  --notify         envía una notificación al terminar (modo timer)
   -h, --help       esta ayuda
 
 Categorías:
-  paquetes journal temporales papelera cache dev docker flatpak navegadores
+  paquetes huerfanos journal temporales papelera cache dev docker flatpak navegadores
 EOF
 }
 
@@ -380,6 +388,7 @@ while [ $# -gt 0 ]; do
         -r|--report)   REPORT=1 ;;
         --docker-all)  DOCKER_ALL=1 ;;
         --trash-all)   TRASH_ALL=1 ;;
+        --notify)      NOTIFY=1 ;;
         --only)        ONLY="${2:-}"; shift ;;
         --only=*)      ONLY="${1#*=}" ;;
         -h|--help)     usage; exit 0 ;;
@@ -456,3 +465,8 @@ freed=$((after - before))
 printf 'Libre ahora: %s\n' "$(human "$after")"
 printf 'Liberado:    %s\n' "$(human "$freed")"
 log "fin: liberado $(human "$freed") · categorías: ${SELECTED[*]}"
+
+if [ "$NOTIFY" = 1 ] && [ "$(id -u)" -ne 0 ] && have notify-send; then
+    notify-send -a limpia -i user-trash "Limpieza completada" \
+        "Liberado: $(human "$freed") · libre: $(human "$after")" 2>/dev/null || true
+fi

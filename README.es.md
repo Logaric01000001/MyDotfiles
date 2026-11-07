@@ -117,6 +117,25 @@ Noctalia genera la paleta desde el fondo de pantalla y la aplica a Rofi y Kitty
 - `sc-kit`: gestiona MCP y skills de OpenCode (`sc-kit list`, `sc-kit add`, `sc-kit test`, `sc-kit profile`).
 - `lock-screen` / `powermenu`: bloqueo y menu de apagado usados por los atajos de Niri.
 - `save-state` / `restore-state`: respaldo y restauracion rapida de configuraciones.
-- `limpia`: libera espacio de forma segura (cachés, pacman, journal, papelera, Docker y Flatpak). Menú con `fzf`, `--report`, `--all`, `--dry-run` y `--only`. Atajo: `Super + Shift + X`.
+- `limpia`: libera espacio de forma segura (cachés, pacman, journal, papelera, Docker y Flatpak). Menú con `fzf`, `--report`, `--all`, `--dry-run` y `--only`. Atajo: `Super + Shift + X` y entrada **Limpiar espacio** en el lanzador (`Super + D`).
 - `antena`: asistente gráfico (AUR `antena-arch`) para adaptadores Wi-Fi USB; el instalador añade `aircrack-ng`, `hcxdumptool`, `hcxtools`, `reaver`, `usb_modeswitch` y `ethtool` para el laboratorio.
 - `opencode-unguarded`: arranca el perfil aislado de OpenCode (requiere el binario aparte).
+
+### Limpieza automática
+
+| Timer | Cuándo | Qué limpia |
+| --- | --- | --- |
+| `limpia.timer` (usuario) | domingos 10:00 | cachés, dev, papelera, Flatpak, Docker básico y navegadores |
+| `limpia-profunda.timer` (usuario) | día 1 a las 11:00 | imágenes Docker no usadas (`--docker-all`) |
+| `limpia.timer` (sistema) | domingos 10:30 | pacman, journal y `/tmp` (se instala con `sudo`) |
+
+Los timers son persistentes: si el equipo estaba apagado, se ejecutan al
+volver. Al terminar, el timer de usuario envía una notificación con el espacio
+liberado.
+
+```bash
+systemctl --user list-timers 'limpia*'   # timers de usuario
+systemctl list-timers 'limpia*'          # timer del sistema
+journalctl --user -u limpia -n 50        # último resultado
+systemctl --user disable --now limpia-profunda.timer   # desactivar el mensual
+```

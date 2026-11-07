@@ -1,0 +1,11 @@
+[Unit]
+Description=Limpieza semanal del sistema (domingos 10:30)
+
+[Timer]
+OnCalendar=Sun *-*-* 10:30:00
+Persistent=true
+RandomizedDelaySec=30min
+AccuracySec=5min
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Limpiar espacio
+Comment=Libera cachés, temporales y archivos no necesarios
+Exec=kitty -e limpia
+Icon=user-trash
+Terminal=false
+Categories=System;
+Keywords=clean;limpiar;espacio;basura;cache;temporal;
+StartupNotify=true

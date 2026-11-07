@@ -339,6 +339,18 @@ if [ -d "$DOTFILES_DIR/scripts" ]; then
     ln -sf "$HOME/.local/bin/help-menu" "$HOME/.local/bin/help-menu.sh" 2>/dev/null || true
 fi
 
+# limpieza periódica (systemd --user): semanal + profunda mensual
+if [ -d "$DOTFILES_DIR/systemd/user" ]; then
+    mkdir -p "$HOME/.config/systemd/user"
+    cp -f "$DOTFILES_DIR/systemd/user/"*.service "$HOME/.config/systemd/user/" 2>/dev/null || true
+    cp -f "$DOTFILES_DIR/systemd/user/"*.timer "$HOME/.config/systemd/user/" 2>/dev/null || true
+    if command -v systemctl &>/dev/null; then
+        systemctl --user daemon-reload 2>/dev/null || true
+        systemctl --user enable --now limpia.timer 2>/dev/null || true
+        systemctl --user enable --now limpia-profunda.timer 2>/dev/null || true
+    fi
+fi
+
 # skills
 if [ -d "$DOTFILES_DIR/skills" ]; then
     chmod +x "$DOTFILES_DIR/skills/skills" "$DOTFILES_DIR/skills/install-antigravity-skills.sh" 2>/dev/null || true
@@ -437,6 +449,17 @@ if [ "$CAN_SUDO" = true ]; then
     # docker: lo usa el MCP de GitHub del kit de OpenCode
     if command -v docker &>/dev/null; then
         sudo systemctl enable --now docker.service 2>/dev/null || true
+    fi
+
+    # limpieza periódica del sistema (pacman, journal, /tmp)
+    if [ -d "$DOTFILES_DIR/systemd/system" ]; then
+        echo "instalando limpieza periódica del sistema..."
+        sudo cp -f "$DOTFILES_DIR/scripts/limpia" /usr/local/bin/limpia 2>/dev/null || true
+        sudo chmod 755 /usr/local/bin/limpia 2>/dev/null || true
+        sudo cp -f "$DOTFILES_DIR/systemd/system/"*.service /etc/systemd/system/ 2>/dev/null || true
+        sudo cp -f "$DOTFILES_DIR/systemd/system/"*.timer /etc/systemd/system/ 2>/dev/null || true
+        sudo systemctl daemon-reload 2>/dev/null || true
+        sudo systemctl enable --now limpia.timer 2>/dev/null || true
     fi
 else
     echo "aviso: sin permisos de root/sudo en este momento; se omiten configuraciones del sistema (/etc/)"

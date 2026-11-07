@@ -1,0 +1,11 @@
+[Unit]
+Description=Limpieza mensual profunda (día 1, 11:00)
+
+[Timer]
+OnCalendar=*-*-01 11:00:00
+Persistent=true
+RandomizedDelaySec=2h
+AccuracySec=10min
+
+[Install]
+WantedBy=timers.target
