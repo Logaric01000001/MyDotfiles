@@ -37,7 +37,7 @@ MyDotfiles/
 ├── Kvantum/          # Tema Qt KvArcDark
 ├── kitty/            # Terminal Kitty y temas
 ├── rofi/             # Menú de aplicaciones y lanzador
-├── noctalia/         # Barra superior y widgets
+├── noctalia/         # Barra superior, ajustes y paletas
 ├── fastfetch/        # Información estética del sistema
 ├── gtk/              # Tema GTK (Catppuccin Mocha)
 ├── vscode/           # Ajustes de VS Code / Codium / Antigravity
@@ -74,6 +74,20 @@ La configuración se instala en `~/.config/opencode`:
 guardarraíles. El repositorio solo guarda el lanzador y su config; el binario
 `~/.local/bin/opencode-unguarded.bin` (~200 MB) no se versiona.
 
+## Personalización visual
+
+| Elemento | Qué es | Dónde se cambia |
+| --- | --- | --- |
+| `Super + D` | **Rofi**, el lanzador de aplicaciones | `rofi/config.rasi` |
+| Barra superior | **Noctalia Shell** | `noctalia/config.toml` y `noctalia/settings.toml` |
+| Ventanas, sombras, animaciones | **Niri** (compositor) | `config.kdl` |
+| Terminal | **Kitty** | `kitty/kitty.conf` |
+| Iconos, cursor y fuente | GTK | `gtk/settings.ini` |
+
+Noctalia genera la paleta desde el fondo de pantalla y la aplica a Rofi y Kitty
+(`rofi/noctalia.rasi` y `kitty/themes/noctalia.conf`). Para cambiar el fondo:
+`Super + W`.
+
 ## Atajos (Mod = Super/Windows)
 
 | Atajo | Accion |
@@ -103,5 +117,6 @@ guardarraíles. El repositorio solo guarda el lanzador y su config; el binario
 - `sc-kit`: gestiona MCP y skills de OpenCode (`sc-kit list`, `sc-kit add`, `sc-kit test`, `sc-kit profile`).
 - `lock-screen` / `powermenu`: bloqueo y menu de apagado usados por los atajos de Niri.
 - `save-state` / `restore-state`: respaldo y restauracion rapida de configuraciones.
+- `limpia`: libera espacio de forma segura (cachés, pacman, journal, papelera, Docker y Flatpak). Menú con `fzf`, `--report`, `--all`, `--dry-run` y `--only`. Atajo: `Super + Shift + X`.
 - `antena`: asistente gráfico (AUR `antena-arch`) para adaptadores Wi-Fi USB; el instalador añade `aircrack-ng`, `hcxdumptool`, `hcxtools`, `reaver`, `usb_modeswitch` y `ethtool` para el laboratorio.
 - `opencode-unguarded`: arranca el perfil aislado de OpenCode (requiere el binario aparte).

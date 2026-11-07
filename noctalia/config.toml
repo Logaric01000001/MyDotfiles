@@ -7,14 +7,15 @@
 enabled = true
 position = "top"
 layer = "top"
-thickness = 34
-padding = 12
-widget_spacing = 10 # Espaciado suficiente (10px) entre módulos para evitar solapamientos
+thickness = 38
+padding = 14
+widget_spacing = 12 # Espaciado suficiente (12px) entre módulos para evitar solapamientos
 margin_edge = 0
 margin_opposite_edge = 0
 margin_ends = 0
-radius = 12
-background_opacity = 1.0
+radius = 14
+capsule_radius = 10
+background_opacity = 0.94
 
 # -----------------------------------------------------------------------------
 # ESTRUCTURA Y DISTRIBUCIÓN DE MÓDULOS
@@ -22,8 +23,9 @@ background_opacity = 1.0
 # Izquierda: Lanzador Rofi, Reloj e indicadores de Workspaces
 start = [
     "Rofi",
-    "clock",
-    "workspaces"
+    "wallpaper",
+    "workspaces",
+    "clock"
 ]
 
 # Centro: Reproductor multimedia aislado en el centro
@@ -33,13 +35,14 @@ center = [
 
 # Derecha: Bandeja del sistema y estado (sin duplicados)
 end = [
-    "tray",
     "network",
     "bluetooth",
     "volume",
     "brightness",
     "battery",
+    "clipboard",
     "notifications",
+    "settings",
     "session"
 ]
 
@@ -52,13 +55,14 @@ end = [
 type = "media"
 max_length = 160.0      # Límite máximo de ancho para no empujar otros elementos
 min_length = 60.0
-art_size = 16.0
+art_size = 18.0
 title_scroll = "none"
 
 # Widget: Reloj
 [widget.clock]
 type = "clock"
-scale = 1.0
+format = "%H:%M"
+scale = 1.3
 
 # Widget: Botón de Rofi
 [widget.Rofi]

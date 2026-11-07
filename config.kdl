@@ -74,7 +74,7 @@ output "DP-2" {
 }
 
 layout {
-    gaps 8
+    gaps 10
     center-focused-column "never"
 
     preset-column-widths {
@@ -94,6 +94,15 @@ layout {
 
     border {
         off
+    }
+
+    // Sombra suave: separa las ventanas del fondo sin ensuciar el borde.
+    shadow {
+        on
+        softness 30
+        spread 5
+        offset x=0 y=6
+        color "#00000070"
     }
 
     struts {
@@ -133,7 +142,7 @@ animations {
 }
 
 window-rule {
-    geometry-corner-radius 12
+    geometry-corner-radius 14
     clip-to-geometry true
 }
 
@@ -176,6 +185,7 @@ binds {
 
     Mod+Shift+H     { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH help-menu"; }
     Mod+Shift+Slash { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH help-menu"; }
+    Mod+Shift+X     { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH kitty -e limpia"; } // Liberar espacio
     Mod+Shift+E { quit; }
     Mod+Shift+Q { close-window; }
     Mod+Q { close-window; }

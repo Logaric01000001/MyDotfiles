@@ -184,6 +184,12 @@ if [ -d "$DOTFILES_DIR/noctalia" ]; then
         mkdir -p "$HOME/.config/noctalia/palettes"
         cp -rf "$DOTFILES_DIR/noctalia/palettes"/* "$HOME/.config/noctalia/palettes/" 2>/dev/null || true
     fi
+    # ajustes activos de la barra (Noctalia los guarda en el estado del usuario)
+    if [ -f "$DOTFILES_DIR/noctalia/settings.toml" ]; then
+        mkdir -p "$HOME/.local/state/noctalia"
+        install_file "$DOTFILES_DIR/noctalia/settings.toml" "$HOME/.local/state/noctalia/settings.toml"
+        sed -i -e "s|__HOME__|$HOME|g" -e "s|/home/logaric|$HOME|g" "$HOME/.local/state/noctalia/settings.toml"
+    fi
 fi
 
 if [ -d "$DOTFILES_DIR/kitty" ]; then

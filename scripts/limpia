@@ -1,0 +1,458 @@
+#!/usr/bin/env bash
+# =============================================================================
+#   limpia — Libera espacio seguro en Arch Linux
+#
+#   Limpia solo cachés y artefactos regenerables. Nunca toca documentos,
+#   ~/.config, ~/.local/share (salvo la papelera) ni bases de datos.
+#
+#   Uso:
+#     limpia                 menú interactivo (fzf)
+#     limpia --report        solo muestra cuánto ocupa cada categoría
+#     limpia --all -y        limpia todo lo seguro sin preguntar
+#     limpia --only cache,dev
+#     limpia --dry-run --all simula sin borrar nada
+#
+#   Opciones:
+#     -n, --dry-run    no borra, solo muestra
+#     -y, --yes        no pedir confirmación
+#     -a, --all        todas las categorías seguras
+#     -r, --report     informe de tamaños y salir
+#     --only LISTA     categorías separadas por comas
+#     --docker-all     además borra imágenes Docker no usadas (no volúmenes)
+#     --trash-all      vacía la papelera completa (por defecto >30 días)
+#     -h, --help       esta ayuda
+# =============================================================================
+
+set -uo pipefail
+
+VERSION="1.0"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/limpia"
+LOG_FILE="$STATE_DIR/limpia.log"
+
+if [ -t 1 ]; then
+    BOLD=$'\033[1m'; DIM=$'\033[2m'; RED=$'\033[0;31m'; GREEN=$'\033[0;32m'
+    YELLOW=$'\033[1;33m'; BLUE=$'\033[0;34m'; CYAN=$'\033[0;36m'; NC=$'\033[0m'
+else
+    BOLD=""; DIM=""; RED=""; GREEN=""; YELLOW=""; BLUE=""; CYAN=""; NC=""
+fi
+
+info()  { printf '%s[ info ]%s %s\n' "$BLUE" "$NC" "$*"; }
+ok()    { printf '%s[  ok  ]%s %s\n' "$GREEN" "$NC" "$*"; }
+warn()  { printf '%s[aviso ]%s %s\n' "$YELLOW" "$NC" "$*"; }
+err()   { printf '%s[error ]%s %s\n' "$RED" "$NC" "$*" >&2; }
+head_() { printf '\n%s%s%s\n' "$BOLD$CYAN" "$*" "$NC"; }
+
+log() {
+    mkdir -p "$STATE_DIR" 2>/dev/null || true
+    printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >>"$LOG_FILE" 2>/dev/null || true
+}
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+size_bytes() {
+    local out
+    out=$(du -sb --apparent-size "$1" 2>/dev/null | awk 'END{print $1}')
+    printf '%s\n' "${out:-0}"
+}
+
+sum_sizes() {
+    local total=0 p s
+    for p in "$@"; do
+        [ -e "$p" ] || continue
+        s=$(size_bytes "$p")
+        total=$((total + ${s:-0}))
+    done
+    echo "$total"
+}
+
+human() { numfmt --to=iec --suffix=B "${1:-0}" 2>/dev/null || printf '%sB' "${1:-0}"; }
+
+# Convierte "29.99GB" (unidad decimal de Docker) a bytes.
+parse_human_bytes() {
+    awk '{
+        s=$0; sub(/ .*/, "", s);
+        n=s; gsub(/[^0-9.]/, "", n);
+        u=s; gsub(/[0-9.]/, "", u);
+        m=1;
+        if (u=="kB") m=1e3; else if (u=="MB") m=1e6;
+        else if (u=="GB") m=1e9; else if (u=="TB") m=1e12;
+        printf "%d\n", n*m
+    }'
+}
+
+docker_reclaimable() {
+    have docker || { echo 0; return; }
+    docker info >/dev/null 2>&1 || { echo 0; return; }
+    docker system df --format '{{.Type}}|{{.Reclaimable}}' 2>/dev/null |
+        awk -F'|' '$1=="Images" || $1=="Containers" || $1=="Build Cache" {print $2}' |
+        parse_human_bytes |
+        awk '{s+=$1} END{print s+0}'
+}
+
+free_bytes() { df --output=avail -B1 / 2>/dev/null | tail -1 | tr -d ' '; }
+
+is_safe() {
+    local r
+    r=$(realpath -m -- "$1" 2>/dev/null) || return 1
+    case "$r" in
+        "$HOME/.cache"|"$HOME/.cache"/*) return 0 ;;
+        "$HOME/.local/share/Trash"/*) return 0 ;;
+        /tmp/*|/var/tmp/*) return 0 ;;
+        /var/cache/pacman/pkg|/var/cache/pacman/pkg/*) return 0 ;;
+        /var/log/journal|/var/log/journal/*) return 0 ;;
+        /var/lib/systemd/coredump|/var/lib/systemd/coredump/*) return 0 ;;
+    esac
+    return 1
+}
+
+clean_dir() {
+    local p="$1" s
+    [ -e "$p" ] || return 0
+    if ! is_safe "$p"; then
+        warn "ruta no permitida, se omite: $p"
+        return 1
+    fi
+    s=$(size_bytes "$p")
+    if [ "$DRY" = 1 ]; then
+        info "[dry] vaciar $p ($(human "$s"))"
+        return 0
+    fi
+    find "$p" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} + 2>/dev/null || true
+    log "limpiado $p ($(human "$s"))"
+    ok "$p ($(human "$s"))"
+}
+
+run() {
+    local desc="$1"; shift
+    if [ "$DRY" = 1 ]; then
+        info "[dry] $desc"
+        return 0
+    fi
+    mkdir -p "$STATE_DIR" 2>/dev/null || true
+    if "$@" >>"$LOG_FILE" 2>&1; then
+        log "ok: $desc"
+        ok "$desc"
+    else
+        warn "falló (ver $LOG_FILE): $desc"
+    fi
+}
+
+need_root() {
+    [ "$DRY" = 1 ] && return 0
+    [ "$(id -u)" -eq 0 ] && return 0
+    if sudo -n true 2>/dev/null; then return 0; fi
+    if [ -t 0 ]; then
+        info "esta categoría necesita permisos de administrador"
+        if sudo -v 2>/dev/null; then return 0; fi
+    fi
+    warn "sin permisos de administrador; se omite la categoría"
+    return 1
+}
+
+confirm() {
+    [ "$ASSUME" = 1 ] && return 0
+    [ "$DRY" = 1 ] && return 0
+    local r
+    read -rp "$(printf '%s%s%s [s/N] ' "$YELLOW" "$1" "$NC")" r || return 1
+    [[ "$r" =~ ^[sS]$ ]]
+}
+
+# -----------------------------------------------------------------------------
+# Categorías
+# -----------------------------------------------------------------------------
+CATS=(paquetes journal temporales papelera cache dev docker flatpak navegadores)
+declare -A DESC=(
+    [paquetes]="Caché de pacman (2 versiones) y huérfanos"
+    [journal]="Journal de systemd hasta 200 MB"
+    [temporales]="Archivos viejos de /tmp, /var/tmp y miniaturas"
+    [papelera]="Papelera de reciclaje (>30 días)"
+    [cache]="Cachés de usuario regenerables"
+    [dev]="Cachés de npm y pnpm (también uv, pip y Go)"
+    [docker]="Contenedores, imágenes y build cache sin usar"
+    [flatpak]="Runtimes Flatpak sin usar"
+    [navegadores]="Caché de Zen, Chromium y Firefox (cerrados)"
+)
+
+measure() {
+    case "$1" in
+        paquetes)    size_bytes /var/cache/pacman/pkg ;;
+        journal)     size_bytes /var/log/journal ;;
+        temporales)  sum_sizes /tmp /var/tmp "$HOME/.cache/thumbnails" "$HOME/.cache/fontconfig" ;;
+        papelera)    sum_sizes "$HOME/.local/share/Trash/files" "$HOME/.local/share/Trash/info" ;;
+        cache)       sum_sizes "$HOME/.cache/thumbnails" "$HOME/.cache/fontconfig" "$HOME/.cache/mesa_shader_cache" \
+                                  "$HOME/.cache/tracker3" "$HOME/.cache/go-build" "$HOME/.cache/pip" \
+                                  "$HOME/.cache/uv" "$HOME/.cache/pnpm" "$HOME/.cache/wine" \
+                                  "$HOME/.cache/jedi" "$HOME/.cache/prisma" "$HOME/.cache/ms-playwright" ;;
+        dev)         sum_sizes "$HOME/.npm" "$HOME/.local/share/pnpm/store" ;;
+        docker)      docker_reclaimable ;;
+        flatpak)     echo 0 ;;
+        navegadores) sum_sizes "$HOME/.cache/zen" "$HOME/.cache/chromium" "$HOME/.cache/mozilla" "$HOME/.cache/BraveSoftware" ;;
+        *)           echo 0 ;;
+    esac
+}
+
+cat_paquetes() {
+    need_root || return 0
+    if have paccache; then
+        run "paccache: conservar 2 versiones" sudo paccache -r -k2
+        run "paccache: quitar paquetes desinstalados" sudo paccache -ruk0
+    else
+        run "pacman -Sc" sudo pacman -Sc --noconfirm
+    fi
+    local -a orphans=()
+    mapfile -t orphans < <(pacman -Qtdq 2>/dev/null || true)
+    if [ "${#orphans[@]}" -gt 0 ]; then
+        warn "paquetes huérfanos: ${#orphans[@]}"
+        if confirm "¿Eliminar los ${#orphans[@]} paquetes huérfanos?"; then
+            run "pacman -Rns: ${#orphans[@]} huérfanos" sudo pacman -Rns --noconfirm "${orphans[@]}"
+        fi
+    else
+        info "sin paquetes huérfanos"
+    fi
+}
+
+cat_journal() {
+    need_root || return 0
+    run "journalctl --vacuum-size=200M" sudo journalctl --vacuum-size=200M
+}
+
+cat_temporales() {
+    need_root || return 0
+    if [ "$DRY" = 1 ]; then
+        info "[dry] borrar /tmp >7 días y /var/tmp >30 días"
+    else
+        sudo find /tmp -mindepth 1 -mtime +7 -exec rm -rf -- {} + 2>/dev/null || true
+        sudo find /var/tmp -mindepth 1 -mtime +30 -exec rm -rf -- {} + 2>/dev/null || true
+        sudo find /var/lib/systemd/coredump -mindepth 1 -mtime +7 -exec rm -rf -- {} + 2>/dev/null || true
+        ok "temporales antiguos"
+    fi
+    clean_dir "$HOME/.cache/thumbnails"
+    clean_dir "$HOME/.cache/fontconfig"
+}
+
+cat_papelera() {
+    local trash="$HOME/.local/share/Trash"
+    if [ "$TRASH_ALL" = 1 ]; then
+        clean_dir "$trash/files"
+        clean_dir "$trash/info"
+        return 0
+    fi
+    [ -d "$trash/files" ] || { info "papelera vacía"; return 0; }
+    if [ "$DRY" = 1 ]; then
+        info "[dry] borrar de la papelera lo anterior a 30 días"
+        return 0
+    fi
+    find "$trash/files" -mindepth 1 -mtime +30 -exec rm -rf -- {} + 2>/dev/null || true
+    find "$trash/info" -mindepth 1 -mtime +30 -exec rm -rf -- {} + 2>/dev/null || true
+    ok "papelera (>30 días)"
+}
+
+cat_cache() {
+    local d
+    for d in thumbnails fontconfig mesa_shader_cache tracker3 go-build pip uv pnpm wine jedi prisma ms-playwright electron node-gyp; do
+        clean_dir "$HOME/.cache/$d"
+    done
+}
+
+cat_dev() {
+    if have npm; then run "npm cache clean" npm cache clean --force; fi
+    if have pnpm; then run "pnpm store prune" pnpm store prune; fi
+    if have uv; then run "uv cache prune" uv cache prune; fi
+    if have pip; then run "pip cache purge" pip cache purge; fi
+    if have go; then run "go clean -cache" go clean -cache; fi
+}
+
+cat_docker() {
+    have docker || { info "docker no está instalado"; return 0; }
+    if ! docker info >/dev/null 2>&1; then
+        warn "docker no responde; se omite"
+        return 0
+    fi
+    run "docker system prune" docker system prune -f
+    if [ "$DOCKER_ALL" = 1 ]; then
+        run "docker image prune -a (imágenes no usadas)" docker image prune -a -f
+    fi
+    run "docker builder prune" docker builder prune -f
+}
+
+cat_flatpak() {
+    have flatpak || { info "flatpak no está instalado"; return 0; }
+    run "flatpak uninstall --unused" flatpak uninstall --unused -y
+}
+
+cat_navegadores() {
+    local pair dir proc
+    for pair in "zen:zen" "chromium:chromium" "mozilla:firefox" "BraveSoftware:brave"; do
+        dir="${pair%%:*}"; proc="${pair##*:}"
+        [ -d "$HOME/.cache/$dir" ] || continue
+        if pgrep -x "$proc" >/dev/null 2>&1; then
+            warn "$dir está abierto; se omite su caché"
+            continue
+        fi
+        clean_dir "$HOME/.cache/$dir"
+    done
+}
+
+# -----------------------------------------------------------------------------
+# Presentación y selección
+# -----------------------------------------------------------------------------
+report() {
+    local c total=0 s
+    head_ "Espacio por categoría"
+    printf '%-13s %10s  %s\n' "CATEGORÍA" "TAMAÑO" "DESCRIPCIÓN"
+    printf '%-13s %10s  %s\n' "─────────" "──────" "───────────"
+    for c in "${CATS[@]}"; do
+        s=$(measure "$c")
+        total=$((total + s))
+        printf '%-13s %10s  %s\n' "$c" "$(human "$s")" "${DESC[$c]}"
+    done
+    printf '%-13s %10s\n' "TOTAL" "$(human "$total")"
+    printf '\nLibre ahora: %s de %s\n' "$(human "$(free_bytes)")" "$(df -h / | awk 'NR==2{print $2}')"
+}
+
+select_categories() {
+    local lines c s
+    lines=$(
+        for c in "${CATS[@]}"; do
+            s=$(measure "$c")
+            printf '%s\t%s\t%s\n' "$c" "$(human "$s")" "${DESC[$c]}"
+        done
+    )
+    if have fzf; then
+        mapfile -t SELECTED < <(
+            printf '%s\n' "$lines" |
+                fzf --multi --height=60% --reverse --delimiter='\t' --with-nth=1,2,3 \
+                    --header='Tab selecciona · Enter ejecuta · categoría / tamaño / descripción' |
+                cut -f1
+        )
+    else
+        printf '%s\n' "$lines" | nl -w2 -s') '
+        read -rp "Categorías (números separados por espacio, 't' todas): " answer || return 1
+        if [[ "$answer" =~ ^[tT]$ ]]; then
+            SELECTED=("${CATS[@]}")
+            return 0
+        fi
+        local n
+        for n in $answer; do
+            [ "$n" -ge 1 ] 2>/dev/null && [ "$n" -le "${#CATS[@]}" ] && SELECTED+=("${CATS[$((n - 1))]}")
+        done
+    fi
+    [ "${#SELECTED[@]}" -gt 0 ]
+}
+
+# -----------------------------------------------------------------------------
+# Argumentos
+# -----------------------------------------------------------------------------
+DRY=0; ASSUME=0; ALL=0; REPORT=0; DOCKER_ALL=0; TRASH_ALL=0; ONLY=""
+declare -a SELECTED=()
+
+usage() {
+    cat <<'EOF'
+limpia — Libera espacio seguro en Arch Linux
+
+Uso:
+  limpia                 menú interactivo (fzf)
+  limpia --report        solo muestra cuánto ocupa cada categoría
+  limpia --all -y        limpia todo lo seguro sin preguntar
+  limpia --only cache,dev
+  limpia --dry-run --all simula sin borrar nada
+
+Opciones:
+  -n, --dry-run    no borra, solo muestra
+  -y, --yes        no pedir confirmación
+  -a, --all        todas las categorías seguras
+  -r, --report     informe de tamaños y salir
+  --only LISTA     categorías separadas por comas
+  --docker-all     además borra imágenes Docker no usadas (no volúmenes)
+  --trash-all      vacía la papelera completa (por defecto >30 días)
+  -h, --help       esta ayuda
+
+Categorías:
+  paquetes journal temporales papelera cache dev docker flatpak navegadores
+EOF
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -n|--dry-run)  DRY=1 ;;
+        -y|--yes)      ASSUME=1 ;;
+        -a|--all)      ALL=1 ;;
+        -r|--report)   REPORT=1 ;;
+        --docker-all)  DOCKER_ALL=1 ;;
+        --trash-all)   TRASH_ALL=1 ;;
+        --only)        ONLY="${2:-}"; shift ;;
+        --only=*)      ONLY="${1#*=}" ;;
+        -h|--help)     usage; exit 0 ;;
+        *) err "opción desconocida: $1"; usage; exit 2 ;;
+    esac
+    shift
+done
+
+if [ -n "$ONLY" ]; then
+    IFS=',' read -r -a SELECTED <<< "$ONLY"
+fi
+if [ "$ALL" = 1 ] && [ "${#SELECTED[@]}" -eq 0 ]; then
+    SELECTED=("${CATS[@]}")
+fi
+
+if [ "$REPORT" = 1 ] && [ "${#SELECTED[@]}" -eq 0 ]; then
+    report
+    exit 0
+fi
+
+if [ "${#SELECTED[@]}" -eq 0 ]; then
+    if ! select_categories; then
+        info "nada seleccionado"
+        exit 0
+    fi
+fi
+
+# validar categorías
+for c in "${SELECTED[@]}"; do
+    if [ -z "${DESC[$c]:-}" ]; then
+        err "categoría desconocida: $c"
+        exit 2
+    fi
+done
+
+# -----------------------------------------------------------------------------
+# Ejecución
+# -----------------------------------------------------------------------------
+if [ "$DRY" = 1 ]; then
+    head_ "limpia v$VERSION · modo simulación"
+else
+    head_ "limpia v$VERSION"
+fi
+before=$(free_bytes)
+total=0
+for c in "${SELECTED[@]}"; do
+    s=$(measure "$c")
+    total=$((total + s))
+    printf '  %-13s %10s  %s\n' "$c" "$(human "$s")" "${DESC[$c]}"
+done
+printf '\nEstimado a liberar: %s\n' "$(human "$total")"
+printf 'Libre ahora:        %s\n\n' "$(human "$before")"
+
+if [ "$DRY" = 0 ] && ! confirm "¿Ejecutar la limpieza?"; then
+    info "cancelado"
+    exit 0
+fi
+
+for c in "${SELECTED[@]}"; do
+    head_ "$c — ${DESC[$c]}"
+    "cat_$c"
+done
+
+head_ "Resultado"
+if [ "$DRY" = 1 ]; then
+    printf 'Modo simulación: no se modificó nada.\n'
+    printf 'Se habrían liberado ~%s.\n' "$(human "$total")"
+    exit 0
+fi
+
+after=$(free_bytes)
+freed=$((after - before))
+[ "$freed" -lt 0 ] && freed=0
+printf 'Libre ahora: %s\n' "$(human "$after")"
+printf 'Liberado:    %s\n' "$(human "$freed")"
+log "fin: liberado $(human "$freed") · categorías: ${SELECTED[*]}"

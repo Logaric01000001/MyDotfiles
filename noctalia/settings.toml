@@ -1,0 +1,197 @@
+config_version = 16
+
+[bar.default]
+background_opacity = 0.94
+capsule_radius = 10
+end = [ "network", "bluetooth", "volume", "brightness", "battery", "clipboard", "notifications", "settings", "session" ]
+padding = 14
+radius = 14
+start = [ "Rofi", "wallpaper", "workspaces", "clock" ]
+thickness = 38
+widget_spacing = 12
+
+[desktop_widgets]
+schema_version = 2
+widget_order = [ "desktop-widget-0000000000000001", "desktop-widget-0000000000000002" ]
+
+    [desktop_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [desktop_widgets.widget.desktop-widget-0000000000000001]
+    box_height = 368.0
+    box_width = 656.0
+    cx = 339.0
+    cy = 200.0
+    output = "eDP-1"
+    placement_height = 768.0
+    placement_width = 1366.0
+    rotation = 0.0
+    type = "sysmon"
+
+        [desktop_widgets.widget.desktop-widget-0000000000000001.settings]
+        stat = "cpu_usage"
+        stat2 = "cpu_temp"
+
+    [desktop_widgets.widget.desktop-widget-0000000000000002]
+    box_height = 192.0
+    box_width = 320.0
+    cx = 1033.0
+    cy = 224.0
+    output = "eDP-1"
+    placement_height = 768.0
+    placement_width = 1366.0
+    rotation = 0.0
+    type = "clock"
+
+[dock]
+
+[lockscreen_widgets]
+enabled = false
+schema_version = 2
+widget_order = [ "lockscreen-login-box@HDMI-A-1", "lockscreen-login-box@winit", "lockscreen-login-box@eDP-1" ]
+
+    [lockscreen_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 955.7833251953125
+    cy = 915.62506103515625
+    output = "HDMI-A-1"
+    placement_height = 1200.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1".settings]
+        background_color = "surface_container"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@eDP-1"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 683.0
+    cy = 586.0
+    output = "eDP-1"
+    placement_height = 768.0
+    placement_width = 1366.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@eDP-1".settings]
+        background_color = "surface_container"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@winit"]
+    box_height = 196.0
+    box_width = 720.0
+    cx = 323.5
+    cy = 484.0
+    output = "winit"
+    placement_height = 0.0
+    placement_width = 0.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@winit".settings]
+        background_color = "surface_container"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_password_reveal = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+[shell]
+app_icon_colorize = true
+lang = "es"
+panel_anchor_bar = "default"
+
+    [shell.panel]
+    list_item_background = true
+    transparency_mode = "soft"
+
+    [shell.screen_corners]
+    enabled = true
+    size = 30
+
+    [shell.screenshot]
+    directory = "~/Imágenes"
+
+[theme]
+builtin = "Ayu"
+community_palette = "Oxocarbon"
+custom_palette = "blueking-mc"
+mode = "dark"
+pure_black_dark = true
+source = "wallpaper"
+wallpaper_scheme = "m3-content"
+
+    [theme.templates]
+    builtin_ids = [ "kitty" ]
+    community_ids = [ "spicetify", "zen-browser", "rofi" ]
+
+[wallpaper]
+directory = "__HOME__/Imágenes/Fondos"
+
+    [wallpaper.default]
+    path = "__HOME__/Imágenes/Fondos/MascaraNegra.jpg"
+
+    [wallpaper.last]
+    path = "__HOME__/Imágenes/Fondos/MascaraNegra.jpg"
+
+    [wallpaper.monitors.HDMI-A-1]
+    path = "__HOME__/.config/current_wallpaper"
+
+    [wallpaper.monitors.eDP-1]
+    path = "__HOME__/Imágenes/Fondos/MascaraNegra.jpg"
+
+[widget.Rofi]
+glyph = "apps-filled"
+type = "custom_button"
+
+    [widget.Rofi.actions]
+    left = "exec rofi -show drun"
+
+[widget.clock]
+format = "%H:%M"
+scale = 1.3
