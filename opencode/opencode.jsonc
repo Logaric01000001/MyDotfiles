@@ -185,7 +185,7 @@
     {
       "action": "subagent",
       "resource": "*",
-      "effect": "ask"
+      "effect": "allow"
     },
     {
       "action": "rea_*",
@@ -211,7 +211,7 @@
       "roblox-studio": {
         "type": "local",
         "command": [
-          "__HOME__/.config/opencode/kit/roblox-studio-mcp.sh"
+          "{env:HOME}/.config/opencode/kit/roblox-studio-mcp.sh"
         ]
       },
       "notion": {
@@ -264,13 +264,13 @@
       "github": {
         "type": "local",
         "command": [
-          "__HOME__/.config/opencode/kit/github-mcp.sh"
+          "{env:HOME}/.config/opencode/kit/github-mcp.sh"
         ]
       },
       "rea": {
         "type": "local",
         "command": [
-          "__HOME__/.config/opencode/kit/rea-mcp.sh"
+          "{env:HOME}/.config/opencode/kit/rea-mcp.sh"
         ]
       }
     }
