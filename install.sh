@@ -27,7 +27,7 @@ PKGS=(
     starship eza zoxide fuzzel cliphist kvantum kvantum-qt5
     pipewire wireplumber pipewire-pulse pipewire-alsa brightnessctl playerctl polkit-gnome
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk
-    ttf-jetbrains-mono-nerd inter-font noto-fonts-emoji papirus-icon-theme
+    ttf-jetbrains-mono-nerd adwaita-fonts noto-fonts-emoji breeze-icons qt5ct imagemagick
     wl-clipboard grim slurp
     bat btop fzf lazygit pacman-contrib lsof nwg-displays
     networkmanager bluez bluez-utils sddm
@@ -169,6 +169,9 @@ install_file() {
 
 echo "copiando configuraciones..."
 install_file "$DOTFILES_DIR/config.kdl" "$HOME/.config/niri/config.kdl"
+# config.kdl incluye noctalia.kdl (colores que genera Noctalia). Si aún no existe,
+# se crea uno neutro para que niri arranque; Noctalia lo sobrescribe al aplicar la paleta.
+[ -f "$HOME/.config/niri/noctalia.kdl" ] || printf 'layout {\n    focus-ring {\n        active-color "#c6c5d0"\n        inactive-color "#1a1a1a"\n    }\n}\n' > "$HOME/.config/niri/noctalia.kdl"
 install_file "$DOTFILES_DIR/hyprlock.conf" "$HOME/.config/hypr/hyprlock.conf"
 install_file "$DOTFILES_DIR/swaylock.conf" "$HOME/.config/swaylock/config"
 
@@ -260,15 +263,36 @@ fi
 # tema gtk (FlatColor dependia de pywal y dejaba las apps transparentes)
 install_file "$DOTFILES_DIR/gtk/settings.ini" "$HOME/.config/gtk-3.0/settings.ini"
 install_file "$DOTFILES_DIR/gtk/settings.ini" "$HOME/.config/gtk-4.0/settings.ini"
+# adw-gtk3: base neutra que Noctalia colorea con la paleta del fondo
+if [ ! -d "$HOME/.local/share/themes/adw-gtk3-dark" ] && [ ! -d /usr/share/themes/adw-gtk3-dark ]; then
+    tmp_adw="$(mktemp -d)"
+    if curl -fsSL -o "$tmp_adw/adw.tar.xz" "https://github.com/lassekongo83/adw-gtk3/releases/download/v6.5/adw-gtk3v6.5.tar.xz"; then
+        mkdir -p "$HOME/.local/share/themes" && tar -xf "$tmp_adw/adw.tar.xz" -C "$HOME/.local/share/themes"
+    fi
+    rm -rf "$tmp_adw"
+fi
 if command -v gsettings &>/dev/null; then
-    gsettings set org.gnome.desktop.interface gtk-theme 'Catppuccin' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface icon-theme 'breeze-dark' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface font-name 'Adwaita Sans 10.5' 2>/dev/null || true
     gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
 fi
+
+# qt5/qt6 (qt6ct + paleta de Noctalia) y btop
+for v in 5 6; do
+    if [ -f "$DOTFILES_DIR/qt/qt${v}ct.conf" ]; then
+        install_file "$DOTFILES_DIR/qt/qt${v}ct.conf" "$HOME/.config/qt${v}ct/qt${v}ct.conf"
+        sed -i "s|__HOME__|$HOME|g" "$HOME/.config/qt${v}ct/qt${v}ct.conf"
+    fi
+done
+install_file "$DOTFILES_DIR/btop/btop.conf" "$HOME/.config/btop/btop.conf"
 
 # terminal por defecto para kde/dolphin
 if command -v kwriteconfig6 &>/dev/null; then
     kwriteconfig6 --file kdeglobals --group General --key TerminalApplication kitty
     kwriteconfig6 --file kdeglobals --group General --key TerminalService kitty.desktop
+    kwriteconfig6 --file kdeglobals --group Icons --key Theme breeze-dark
 elif command -v kwriteconfig5 &>/dev/null; then
     kwriteconfig5 --file kdeglobals --group General --key TerminalApplication kitty
     kwriteconfig5 --file kdeglobals --group General --key TerminalService kitty.desktop

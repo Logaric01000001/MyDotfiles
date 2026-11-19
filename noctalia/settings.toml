@@ -187,7 +187,7 @@ source = "wallpaper"
 wallpaper_scheme = "m3-content"
 
     [theme.templates]
-    builtin_ids = [ "kitty" ]
+    builtin_ids = [ "kitty", "niri", "gtk3", "gtk4", "qt", "kcolorscheme", "btop" ]
     community_ids = [ "spicetify", "zen-browser", "rofi" ]
 
 [wallpaper]

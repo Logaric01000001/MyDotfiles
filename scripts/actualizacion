@@ -368,6 +368,24 @@ if [ "$SKIP_SYNC" = false ] && [ -d "$DOTFILES_DIR" ]; then
         cp -f "$DOTFILES_DIR/pnpm/config.yaml" "$HOME/.config/pnpm/config.yaml"
     fi
 
+    # Temas de menús (rofi), prompt, bloqueo, Qt y btop
+    if [ -d "$DOTFILES_DIR/rofi" ]; then
+        mkdir -p "$HOME/.config/rofi"
+        for r in "$DOTFILES_DIR/rofi"/*.rasi; do
+            [ "$(basename "$r")" = "noctalia.rasi" ] && continue  # lo genera Noctalia
+            cp -f "$r" "$HOME/.config/rofi/"
+        done
+    fi
+    [ -f "$DOTFILES_DIR/zsh/starship/starship-simple.toml" ] && mkdir -p "$HOME/.zsh/starship" && cp -f "$DOTFILES_DIR/zsh/starship/starship-simple.toml" "$HOME/.zsh/starship/"
+    [ -f "$DOTFILES_DIR/hyprlock.conf" ] && mkdir -p "$HOME/.config/hypr" && cp -f "$DOTFILES_DIR/hyprlock.conf" "$HOME/.config/hypr/hyprlock.conf"
+    for v in 5 6; do
+        if [ -f "$DOTFILES_DIR/qt/qt${v}ct.conf" ]; then
+            mkdir -p "$HOME/.config/qt${v}ct"
+            sed "s|__HOME__|$HOME|g" "$DOTFILES_DIR/qt/qt${v}ct.conf" > "$HOME/.config/qt${v}ct/qt${v}ct.conf"
+        fi
+    done
+    log_ok "Temas de menús, prompt, bloqueo y Qt sincronizados."
+
     # Recargar Niri si está corriendo
     if pgrep -x niri >/dev/null 2>&1; then
         if command -v niri >/dev/null 2>&1; then

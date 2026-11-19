@@ -3,7 +3,7 @@
 // autostart
 spawn-at-startup "noctalia"
 spawn-at-startup "bash" "-c" "sleep 2 && PATH=$HOME/.local/bin:$PATH restore-state.sh"
-spawn-at-startup "protonvpn" "connect"
+// spawn-at-startup "protonvpn" "connect"  // desactivado: protonvpn no está instalado
 spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
 // spawn-at-startup "mako"
 
@@ -13,9 +13,18 @@ spawn-at-startup "swayidle" "-w" \
 
 prefer-no-csd
 
+cursor {
+    xcursor-theme "Bibata-Modern-Ice"
+    xcursor-size 24
+    hide-when-typing
+}
+
 environment {
     QT_QPA_PLATFORM "wayland;xcb"
     ELECTRON_OZONE_PLATFORM_HINT "auto"
+    QT_QPA_PLATFORMTHEME "qt6ct"
+    XCURSOR_THEME "Bibata-Modern-Ice"
+    XCURSOR_SIZE "24"
 }
 
 screenshot-path "~/Imágenes/Capturas/screenshot-%Y-%m-%d-%H-%M-%S.png"
@@ -88,8 +97,7 @@ layout {
 
     focus-ring {
         width 3
-        active-gradient from="#cba6f7" to="#89b4fa" angle=45
-        inactive-color "#313244"
+        // colores: noctalia.kdl (siguen al fondo de pantalla)
     }
 
     border {
@@ -323,3 +331,6 @@ binds {
     Ctrl+Print { screenshot-screen; }
     Alt+Print { screenshot-window; }
 }
+
+// Paleta generada por Noctalia desde el fondo de pantalla (borde, pestañas, etc.)
+include "noctalia.kdl"
