@@ -164,6 +164,14 @@ window-rule {
     open-floating true
 }
 
+// vídeo flotante (picture-in-picture) en la esquina inferior derecha
+window-rule {
+    match title=r#"^(Picture-in-Picture|Imagen en imagen|Picture in picture)$"#
+    open-floating true
+    default-floating-position x=24 y=24 relative-to="bottom-right"
+    default-column-width { fixed 480; }
+}
+
 window-rule {
     match app-id="wl-mirror"
     open-fullscreen true
@@ -279,6 +287,26 @@ binds {
 
     Mod+V { toggle-window-floating; }
     Mod+Shift+V { switch-focus-between-floating-and-tiling; }
+
+    // productividad (Noctalia + niri)
+    Mod+Tab        repeat=false { toggle-overview; } // Vista general de ventanas
+    Mod+O          repeat=false { toggle-overview; } // Vista general de ventanas
+    Mod+Ctrl+V     { spawn "noctalia" "msg" "panel-toggle" "clipboard"; } // Historial del portapapeles
+    Mod+N          { spawn "noctalia" "msg" "panel-toggle" "control-center"; } // Centro de control / notificaciones
+    Mod+Shift+N    { spawn "noctalia" "msg" "notification-dnd-toggle"; } // No molestar
+    Mod+Shift+S    { spawn "noctalia" "msg" "screenshot-annotate"; } // Captura con anotación
+    Mod+Shift+I    { spawn "noctalia" "msg" "caffeine-toggle"; } // Evitar suspensión (cafeína)
+    Mod+T          { toggle-column-tabbed-display; } // Columna en pestañas
+    Mod+Comma      { consume-or-expel-window-left; } // Apilar/sacar ventana (izq.)
+    Mod+Period     { consume-or-expel-window-right; } // Apilar/sacar ventana (der.)
+    Mod+Shift+0    { move-column-to-workspace 10; }
+    Mod+Ctrl+F     { expand-column-to-available-width; } // Expandir al espacio libre
+
+    // ratón: rueda + Super para moverse
+    Mod+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp   cooldown-ms=150 { focus-workspace-up; }
+    Mod+Shift+WheelScrollDown { focus-column-right; }
+    Mod+Shift+WheelScrollUp   { focus-column-left; }
 
     XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%+"; } // Subir volumen
     XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-"; } // Bajar volumen
