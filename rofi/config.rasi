@@ -1,16 +1,20 @@
 /* =============================================================================
- *   ROFI — LANZADOR DE APLICACIONES (WIN + D)
- *   Los colores los genera Noctalia desde el fondo de pantalla.
+ *   ROFI — tema base (lanzador Super+D / Super+Space)
+ *   Colores: noctalia.rasi (generado por Noctalia desde el fondo de pantalla).
+ *   Variantes: cheatsheet.rasi (Super+Shift+H), menu.rasi (energía, pantallas),
+ *              wallpaper.rasi (selector de fondos).
  * ============================================================================= */
 
+@theme "/dev/null"
 @import "noctalia.rasi"
 
 configuration {
     modi:                   "drun,run";
     show-icons:             true;
     icon-theme:             "Catppuccin-Mocha";
-    font:                   "JetBrains Mono Nerd Font 11";
-    display-drun:           "󰀻";
+    font:                   "Adwaita Sans 11";
+    display-drun:           "";
+    display-run:            "";
     drun-display-format:    "{name}";
     drun-match-fields:      "name,generic,exec,categories,keywords";
     matching:               "fuzzy";
@@ -19,81 +23,118 @@ configuration {
     case-sensitive:         false;
     cycle:                  true;
     terminal:               "kitty";
+    hover-select:           true;
+    me-select-entry:        "";
+    me-accept-entry:        "MousePrimary";
 }
 
 * {
     background-color: transparent;
     text-color:       @fg;
+    muted:            @border;
     margin:           0;
     padding:          0;
+    spacing:          0;
 }
 
 window {
-    width:            540px;
+    width:            560px;
     background-color: @bg;
-    border:           1px;
-    border-color:     @border;
-    border-radius:    14px;
-    padding:          16px;
+    border:           1px solid;
+    border-color:     @bg-alt;
+    border-radius:    16px;
+    padding:          8px;
     location:         center;
     anchor:           center;
 }
 
 mainbox {
-    children:         [ "inputbar", "listview" ];
-    spacing:          12px;
+    children:         [ "inputbar", "message", "listview" ];
+    spacing:          6px;
 }
 
 inputbar {
     children:         [ "prompt", "entry" ];
-    background-color: @bg;
-    border:           0 0 1px 0;
-    border-color:     @border;
-    padding:          0 0 12px 0;
-    spacing:          10px;
+    background-color: @bg-alt;
+    border-radius:    10px;
+    padding:          12px 14px;
+    spacing:          12px;
 }
 
 prompt {
-    text-color:       @accent;
-    font:             "JetBrains Mono Nerd Font 12";
+    text-color:       @muted;
+    font:             "JetBrainsMono Nerd Font 12";
+    vertical-align:   0.5;
 }
 
 entry {
     text-color:        @fg;
-    placeholder:       "Buscar aplicaciones…";
-    placeholder-color: @border;
+    placeholder:       "Buscar";
+    placeholder-color: @muted;
+    cursor:            text;
+    vertical-align:    0.5;
+}
+
+message {
+    background-color: transparent;
+    padding:          6px 14px 2px 14px;
+}
+
+textbox {
+    text-color:       @muted;
+    font:             "Adwaita Sans 9.5";
+    markup:           true;
 }
 
 listview {
     lines:            8;
     columns:          1;
-    spacing:          4px;
+    spacing:          2px;
+    padding:          4px 0 0 0;
     cycle:            true;
     dynamic:          true;
+    fixed-height:     false;
     scrollbar:        false;
 }
 
 element {
-    padding:          10px 12px;
+    padding:          9px 12px;
+    border:           0 0 0 2px solid;
+    border-color:     transparent;
     border-radius:    8px;
     spacing:          12px;
-    text-color:       @fg;
+    cursor:           pointer;
 }
 
 element-icon {
-    size:             24px;
+    size:             22px;
+    vertical-align:   0.5;
+    cursor:           inherit;
 }
 
 element-text {
     text-color:       inherit;
     vertical-align:   0.5;
+    cursor:           inherit;
 }
 
-element selected {
-    background-color: @accent;
-    text-color:       @accent-fg;
+element selected,
+element selected.normal,
+element selected.active {
+    background-color: @bg-alt;
+    border-color:     @accent;
+    text-color:       @fg;
 }
 
-element selected element-text {
-    text-color:       @accent-fg;
+element normal.normal,
+element alternate.normal,
+element normal.urgent,
+element alternate.urgent {
+    background-color: transparent;
+    text-color:       @fg;
+}
+
+element normal.active,
+element alternate.active {
+    text-color:       @accent;
 }

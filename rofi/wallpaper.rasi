@@ -1,0 +1,43 @@
+/* Selector de fondos: cuadrícula de miniaturas. */
+@import "config.rasi"
+
+configuration {
+    show-icons:     true;
+}
+window {
+    width:          820px;
+    padding:        10px;
+}
+listview {
+    columns:        4;
+    lines:          2;
+    flow:           horizontal;
+    fixed-columns:  true;
+    fixed-height:   true;
+    spacing:        10px;
+    padding:        8px 2px 2px 2px;
+}
+element {
+    orientation:    vertical;
+    padding:        6px 6px 8px 6px;
+    spacing:        2px;
+    border:         0;
+    border-radius:  12px;
+}
+element-icon {
+    size:           168px;
+    border-radius:  8px;
+    horizontal-align: 0.5;
+}
+element-text {
+    horizontal-align: 0.5;
+    font:           "Adwaita Sans 9.5";
+    text-color:     @muted;
+}
+element selected,
+element selected.normal {
+    background-color: @bg-alt;
+}
+element selected element-text {
+    text-color:     @fg;
+}

@@ -11,7 +11,16 @@ EXT_OUTPUT=$(niri msg outputs 2>/dev/null | grep -E '^Output ' | grep -v 'eDP' |
 PRIMARY_OUTPUT=$(niri msg outputs 2>/dev/null | grep -E '^Output ' | grep 'eDP' | head -n 1 | awk -F '"' '{print $4}')
 [ -z "$PRIMARY_OUTPUT" ] && PRIMARY_OUTPUT="eDP-1"
 
-choice=$(printf "Extend\nMirror\nLaptop Only\nExternal Only\n" | rofi -dmenu -i -p "Pantalla")
+G='<span font_family="JetBrainsMono Nerd Font" size="13pt">%s</span>   %s   <span size="9pt" alpha="55%%">%s</span>\n'
+idx=$(printf "$G$G$G$G" \
+    "󰍺" "Extender" "$EXT_OUTPUT a la derecha" \
+    "󰍹" "Duplicar" "misma imagen en ambas" \
+    "󰌢" "Solo portátil" "$PRIMARY_OUTPUT" \
+    "󰶐" "Solo externo" "$EXT_OUTPUT" |
+    rofi -dmenu -i -markup-rows -format i -no-custom -p "󰍹  Pantallas" -theme "$HOME/.config/rofi/menu.rasi")
+case "$idx" in
+  0) choice="Extend" ;; 1) choice="Mirror" ;; 2) choice="Laptop Only" ;; 3) choice="External Only" ;; *) exit 0 ;;
+esac
 
 notify() { notify-send -a "Pantallas" -i display "$@" 2>/dev/null || true; }
 

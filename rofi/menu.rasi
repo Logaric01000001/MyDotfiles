@@ -1,0 +1,23 @@
+/* Menús cortos con icono y descripción (energía, pantallas, destino de fondo). */
+@import "config.rasi"
+
+configuration {
+    show-icons:     false;
+}
+
+window {
+    width:          440px;
+}
+inputbar {
+    children:       [ "prompt", "entry" ];
+}
+listview {
+    lines:          6;
+    fixed-height:   false;
+}
+element {
+    padding:        11px 14px;
+}
+element-text {
+    markup:         true;
+}

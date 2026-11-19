@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-#   🎨 SET-WALLPAPER — Gestor Universal de Fondos de Pantalla
+#   SET-WALLPAPER — Gestor Universal de Fondos de Pantalla
 #   Integrado con Noctalia Shell (Escritorio) y SilentSDDM (Pantalla de inicio).
 # =============================================================================
 
@@ -51,21 +51,25 @@ prompt_image() {
         exit 0
     fi
 
-    local names=()
-    for f in "${images[@]}"; do
-        names+=("$(basename "$f")")
-    done
+    # Miniaturas en caché (se regeneran solo si la imagen cambia)
+    local thumbs="$HOME/.cache/wallpaper-thumbs"
+    mkdir -p "$thumbs"
+    local f t name idx
+    {
+        for f in "${images[@]}"; do
+            t="$thumbs/$(printf '%s' "$f" | md5sum | cut -c1-16)-43.png"
+            if [ ! -s "$t" ] || [ "$f" -nt "$t" ]; then
+                magick "$f[0]" -auto-orient -thumbnail 400x300^ -gravity center -extent 400x300 "$t" 2>/dev/null || t="$f"
+            fi
+            name="$(basename "${f%.*}")"
+            printf '%s\0icon\x1f%s\n' "${name//[_-]/ }" "$t"
+        done
+    } > "$thumbs/.list"
 
-    local selected_name
-    selected_name=$(printf "%s\n" "${names[@]}" | rofi -dmenu -i -p "$prompt_title")
-    [ -z "$selected_name" ] && exit 0
-
-    for f in "${images[@]}"; do
-        if [ "$(basename "$f")" = "$selected_name" ]; then
-            echo "$f"
-            return 0
-        fi
-    done
+    idx=$(rofi -dmenu -i -format i -no-custom -show-icons -p "󰸉  ${prompt_title%:}" \
+               -theme "$HOME/.config/rofi/wallpaper.rasi" < "$thumbs/.list")
+    [ -z "$idx" ] && exit 0
+    echo "${images[$idx]}"
 }
 
 # Aplicar fondo al Escritorio (Adentro) vía Noctalia
@@ -151,23 +155,23 @@ IMAGE="${2:-}"
 
 case "$MODE" in
     select-all|menu-all)
-        chosen=$(prompt_image "Fondo para Todo (Escritorio + SDDM):")
+        chosen=$(prompt_image "Fondo · escritorio e inicio")
         [ -n "$chosen" ] && set_all "$chosen"
         ;;
 
     select-inside|menu-inside|select-desktop)
-        chosen=$(prompt_image "Fondo para Escritorio (Adentro):")
+        chosen=$(prompt_image "Fondo · escritorio")
         [ -n "$chosen" ] && set_inside "$chosen"
         ;;
 
     select-outside|menu-outside|select-sddm)
-        chosen=$(prompt_image "Fondo para Pantalla de Inicio (Afuera):")
+        chosen=$(prompt_image "Fondo · pantalla de inicio")
         [ -n "$chosen" ] && set_outside "$chosen"
         ;;
 
     all|todo|both)
         if [ -z "$IMAGE" ]; then
-            chosen=$(prompt_image "Fondo para Todo:")
+            chosen=$(prompt_image "Fondo · escritorio e inicio")
             [ -n "$chosen" ] && set_all "$chosen"
         else
             set_all "$IMAGE"
@@ -176,7 +180,7 @@ case "$MODE" in
 
     inside|desktop|dentro)
         if [ -z "$IMAGE" ]; then
-            chosen=$(prompt_image "Fondo para Escritorio:")
+            chosen=$(prompt_image "Fondo · escritorio")
             [ -n "$chosen" ] && set_inside "$chosen"
         else
             set_inside "$IMAGE"
@@ -185,7 +189,7 @@ case "$MODE" in
 
     outside|sddm|fuera|login)
         if [ -z "$IMAGE" ]; then
-            chosen=$(prompt_image "Fondo para Pantalla de Inicio:")
+            chosen=$(prompt_image "Fondo · pantalla de inicio")
             [ -n "$chosen" ] && set_outside "$chosen"
         else
             set_outside "$IMAGE"
@@ -193,10 +197,10 @@ case "$MODE" in
         ;;
 
     menu|interactive|"")
-        chosen=$(prompt_image "Seleccionar Fondo:")
+        chosen=$(prompt_image "Fondo")
         [ -z "$chosen" ] && exit 0
 
-        target=$(printf "Todo (Escritorio + Pantalla de Inicio)\nSolo Escritorio (Adentro)\nSolo Pantalla de Inicio (Afuera)" | rofi -dmenu -i -p "Aplicar en:")
+        target=$(printf "Todo (Escritorio + Pantalla de Inicio)\nSolo Escritorio (Adentro)\nSolo Pantalla de Inicio (Afuera)" | rofi -dmenu -i -no-custom -p "󰸉  Aplicar en" -theme "$HOME/.config/rofi/menu.rasi")
         case "$target" in
             "Todo"*) set_all "$chosen" ;;
             "Solo Escritorio"*) set_inside "$chosen" ;;

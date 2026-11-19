@@ -1,0 +1,37 @@
+/* Hoja de atajos (Super+Shift+H) — ancha, densa y legible. */
+@import "config.rasi"
+
+configuration {
+    show-icons:     false;
+}
+
+window {
+    width:          860px;
+    padding:        10px;
+}
+inputbar {
+    padding:        14px 16px;
+}
+prompt {
+    text-color:     @accent;
+}
+listview {
+    lines:          13;
+    fixed-height:   true;
+    scrollbar:      true;
+    spacing:        0;
+}
+scrollbar {
+    handle-width:   3px;
+    handle-color:   @muted;
+    background-color: transparent;
+    border-radius:  3px;
+    margin:         0 0 0 6px;
+}
+element {
+    padding:        7px 14px;
+    border-radius:  7px;
+}
+element-text {
+    markup:         true;
+}

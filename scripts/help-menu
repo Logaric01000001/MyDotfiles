@@ -1,179 +1,371 @@
 #!/usr/bin/env python3
+"""Hoja de atajos (Super+Shift+H).
+
+Lee los atajos reales de niri (config.kdl) y de kitty (kitty.conf), los agrupa
+por sección, une las teclas alternativas de una misma acción y los muestra en
+rofi con el tema cheatsheet.rasi. Enter ejecuta el atajo seleccionado.
+
+Para que un atajo nuevo salga bien descrito basta con añadir `// descripción`
+al final de su línea en config.kdl.
+"""
+import html
 import os
 import re
 import subprocess
 import sys
 
-CONFIG_PATHS = [
-    os.path.expanduser("~/.config/niri/config.kdl"),
-    os.path.expanduser("~/MyDotfiles/config.kdl")
+HOME = os.path.expanduser("~")
+NIRI_PATHS = [f"{HOME}/.config/niri/config.kdl", f"{HOME}/MyDotfiles/config.kdl"]
+KITTY_PATHS = [f"{HOME}/.config/kitty/kitty.conf", f"{HOME}/MyDotfiles/kitty/kitty.conf"]
+PALETTE = f"{HOME}/.config/rofi/noctalia.rasi"
+THEME = f"{HOME}/.config/rofi/cheatsheet.rasi"
+
+MONO = "JetBrainsMono Nerd Font"
+KEYS_WIDTH = 32  # ancho (en caracteres monoespaciados) de la columna de teclas
+
+# --- Secciones -------------------------------------------------------------
+# Orden de aparición y nombre visible. La clave es la sección interna.
+SECTIONS = [
+    ("sistema", "Sistema"),
+    ("apps", "Aplicaciones"),
+    ("herramientas", "Herramientas"),
+    ("ventanas", "Ventanas"),
+    ("foco", "Navegar"),
+    ("mover", "Mover"),
+    ("tamano", "Tamaño y disposición"),
+    ("workspaces", "Espacios de trabajo"),
+    ("monitores", "Monitores"),
+    ("raton", "Ratón"),
+    ("apariencia", "Apariencia"),
+    ("capturas", "Capturas"),
+    ("multimedia", "Multimedia"),
+    ("kitty", "Terminal · kitty"),
 ]
 
-# Descripciones limpias para acciones internas de Niri sin comentario
-BUILTIN_DESCRIPTIONS = {
-    "quit": "Cerrar sesión / Salir de Niri",
-    "close-window": "Cerrar ventana activa",
-    "maximize-column": "Maximizar columna (manteniendo barra)",
-    "fullscreen-window": "Pantalla completa total",
+# Comentario de sección en config.kdl -> sección interna
+SECTION_COMMENTS = {
+    "apps": "apps",
+    "foco": "foco",
+    "mover": "mover",
+    "monitores": "monitores",
+    "workspaces": "workspaces",
+    "tamaño": "tamano",
+    "productividad": "herramientas",
+    "ratón": "raton",
+}
+
+# Acciones que van a una sección concreta sin importar dónde estén escritas
+ACTION_SECTION = [
+    (r"set-wallpaper", "apariencia"),
+    (r"^screenshot|screenshot-", "capturas"),
+    (r"close-window|toggle-window-floating|switch-focus-between|fullscreen-window|maximize-column", "ventanas"),
+    (r"toggle-column-tabbed|consume-or-expel|expand-column|center-column", "tamano"),
+]
+
+# Descripciones para acciones de niri sin comentario
+NIRI_DESC = {
+    "quit": "Cerrar sesión",
+    "close-window": "Cerrar ventana",
+    "maximize-column": "Maximizar columna",
+    "fullscreen-window": "Pantalla completa",
     "center-column": "Centrar columna",
-    "toggle-window-floating": "Alternar modo flotante",
-    "switch-focus-between-floating-and-tiling": "Alternar foco entre flotante y mosaico",
-    "switch-preset-column-width": "Alternar anchos predefinidos (33% / 50% / 66% / 100%)",
-    "reset-window-height": "Restablecer altura de ventana",
-    "focus-column-left": "Mover foco a la izquierda",
-    "focus-column-right": "Mover foco a la derecha",
-    "focus-window-down": "Mover foco abajo",
-    "focus-window-up": "Mover foco arriba",
+    "toggle-window-floating": "Flotante / mosaico",
+    "switch-focus-between-floating-and-tiling": "Alternar foco flotante ↔ mosaico",
+    "switch-preset-column-width": "Ancho predefinido (⅓ · ½ · ⅔ · completo)",
+    "reset-window-height": "Restablecer altura",
+    "focus-column-left": "Ventana a la izquierda",
+    "focus-column-right": "Ventana a la derecha",
+    "focus-window-down": "Ventana de abajo",
+    "focus-window-up": "Ventana de arriba",
     "move-column-left": "Mover columna a la izquierda",
     "move-column-right": "Mover columna a la derecha",
     "move-window-down": "Mover ventana abajo",
     "move-window-up": "Mover ventana arriba",
-    "focus-workspace-down": "Ir al espacio de trabajo inferior",
-    "focus-workspace-up": "Ir al espacio de trabajo superior",
-    "move-column-to-workspace-down": "Mover columna al espacio inferior",
-    "move-column-to-workspace-up": "Mover columna al espacio superior",
-    "screenshot": "Captura de pantalla",
-    "screenshot-screen": "Captura de monitor completo",
-    "screenshot-window": "Captura de ventana activa",
+    "focus-monitor-left": "Monitor de la izquierda",
+    "focus-monitor-right": "Monitor de la derecha",
+    "move-column-to-monitor-left": "Llevar columna al monitor izquierdo",
+    "move-column-to-monitor-right": "Llevar columna al monitor derecho",
+    "focus-workspace-down": "Espacio siguiente",
+    "focus-workspace-up": "Espacio anterior",
+    "move-column-to-workspace-down": "Llevar columna al espacio siguiente",
+    "move-column-to-workspace-up": "Llevar columna al espacio anterior",
+    "screenshot": "Captura de una zona",
+    "screenshot-screen": "Captura de la pantalla",
+    "screenshot-window": "Captura de la ventana",
+    "toggle-overview": "Vista general",
+    "set-column-width -10%": "Columna más estrecha",
+    "set-column-width +10%": "Columna más ancha",
+    "set-window-height -10%": "Ventana más baja",
+    "set-window-height +10%": "Ventana más alta",
 }
 
-def format_key(key_str):
-    parts = [p.strip() for p in key_str.split("+") if p.strip()]
-    return " + ".join(parts)
+# Descripciones para acciones de kitty
+KITTY_DESC = {
+    "copy_to_clipboard": "Copiar",
+    "paste_from_clipboard": "Pegar",
+    "new_tab": "Nueva pestaña",
+    "close_tab": "Cerrar pestaña",
+    "next_tab": "Pestaña siguiente",
+    "previous_tab": "Pestaña anterior",
+    "increase_font_size": "Texto más grande",
+    "decrease_font_size": "Texto más pequeño",
+    "reset_font_size": "Tamaño de texto original",
+    "launch --location=split": "Dividir panel",
+    "launch --location=vsplit": "Dividir en vertical",
+    "launch --location=hsplit": "Dividir en horizontal",
+    "toggle_layout stack": "Ampliar / restaurar panel",
+    "neighboring_window": "Ir al panel",
+    "new_os_window_with_cwd": "Nueva ventana en esta carpeta",
+}
 
-def parse_niri_config():
-    config_file = None
-    for path in CONFIG_PATHS:
-        if os.path.isfile(path):
-            config_file = path
-            break
+KEY_NAMES = {
+    "Mod": "Super", "Shift": "Shift", "Ctrl": "Ctrl", "Alt": "Alt",
+    "Return": "Enter", "Space": "Espacio", "Tab": "Tab", "Escape": "Esc",
+    "Left": "←", "Right": "→", "Up": "↑", "Down": "↓",
+    "Page_Down": "AvPág", "Page_Up": "RePág",
+    "Comma": ",", "Period": ".", "Minus": "−", "Equal": "=", "Slash": "/",
+    "Print": "ImprPant",
+    "WheelScrollDown": "Rueda ↓", "WheelScrollUp": "Rueda ↑",
+    "XF86AudioRaiseVolume": "Vol +", "XF86AudioLowerVolume": "Vol −",
+    "XF86AudioMute": "Silencio", "XF86AudioMicMute": "Mic",
+    "XF86AudioPlay": "Play", "XF86AudioNext": "Siguiente", "XF86AudioPrev": "Anterior",
+    "XF86MonBrightnessUp": "Brillo +", "XF86MonBrightnessDown": "Brillo −",
+    # kitty
+    "ctrl": "Ctrl", "shift": "Shift", "alt": "Alt", "super": "Super",
+    "enter": "Enter", "left": "←", "right": "→", "up": "↑", "down": "↓",
+    "plus": "+", "minus": "−", "backslash": "\\",
+}
 
-    if not config_file:
+
+def first_existing(paths):
+    return next((p for p in paths if os.path.isfile(p)), None)
+
+
+def load_palette():
+    pal = {"bg": "#121212", "bg-alt": "#1e1e1e", "fg": "#e6e6e6",
+           "accent": "#c6c5d0", "border": "#8a8a8a"}
+    try:
+        with open(PALETTE, encoding="utf-8") as f:
+            for name, value in re.findall(r"^\s*([\w-]+):\s*(#[0-9a-fA-F]{6})", f.read(), re.M):
+                pal[name] = value
+    except OSError:
+        pass
+    return pal
+
+
+def mix(a, b, t):
+    """Mezcla dos colores hex: t=0 -> a, t=1 -> b."""
+    ca = [int(a[i:i + 2], 16) for i in (1, 3, 5)]
+    cb = [int(b[i:i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(f"{round(x + (y - x) * t):02x}" for x, y in zip(ca, cb))
+
+
+def pretty_key(token):
+    if token in KEY_NAMES:
+        return KEY_NAMES[token]
+    if len(token) == 1:
+        return token.upper()
+    return token
+
+
+def split_combo(combo, sep="+"):
+    # "Mod+Shift+Equal" -> ["Super", "Shift", "="] ; kitty "ctrl+shift+plus"
+    parts = [p for p in combo.split(sep) if p]
+    return [pretty_key(p) for p in parts]
+
+
+# --- Lectura de niri -------------------------------------------------------
+def parse_niri():
+    path = first_existing(NIRI_PATHS)
+    if not path:
         return []
-
-    entries = []
-    with open(config_file, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         content = f.read()
-
-    binds_match = re.search(r"binds\s*\{(.*)\}", content, re.DOTALL)
-    if not binds_match:
+    m = re.search(r"^binds\s*\{(.*)^\}", content, re.S | re.M)
+    if not m:
         return []
 
-    binds_block = binds_match.group(1)
-
-    for raw_line in binds_block.splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("//"):
+    section = "sistema"
+    entries = []
+    for raw in m.group(1).splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if line.startswith("//"):
+            word = line[2:].strip().split(" ")[0].rstrip(":").lower()
+            if word in SECTION_COMMENTS:
+                section = SECTION_COMMENTS[word]
             continue
 
         comment = ""
         if "//" in line:
-            parts = line.split("//", 1)
-            line = parts[0].strip()
-            comment = parts[1].strip()
+            line, comment = (s.strip() for s in line.split("//", 1))
 
-        m = re.match(r"^([\w\+\-_]+)(?:\s+[^\{]+)?\s*\{\s*(.+?);?\s*\}$", line)
-        if not m:
+        bm = re.match(r"^([\w+]+)(?:\s+[^{]*)?\{\s*(.+?);?\s*\}$", line)
+        if not bm:
+            continue
+        key, action = bm.group(1), bm.group(2).strip().rstrip(";").strip()
+
+        # Espacios numerados: una sola fila resumen
+        if re.fullmatch(r"Mod(\+Shift)?\+[02-9]", key):
             continue
 
-        key_raw = m.group(1).strip()
-        action_raw = m.group(2).strip().rstrip(";")
+        sec = "multimedia" if key.startswith("XF86") else section
+        for pattern, target in ACTION_SECTION:
+            if re.search(pattern, action):
+                sec = target
+                break
 
-        # Omitir el propio lanzador de ayuda y simplificar números 2-9
-        if key_raw in ["Mod+Shift+H", "Mod+Shift+Slash"]:
-            continue
-
-        if re.match(r"Mod(\+Shift)?\+[2-90]", key_raw):
-            continue
-
-        key_display = format_key(key_raw)
-        if key_raw == "Mod+1":
-            key_display = "Mod + 1 .. 9"
-            comment = "Ir a espacio de trabajo 1 al 9"
-        elif key_raw == "Mod+Shift+1":
-            key_display = "Mod + Shift + 1 .. 9"
-            comment = "Mover columna a espacio 1 al 9"
-
-        exec_payload = None
-        desc = comment
-
-        spawn_match = re.match(r'^spawn\s+(.+)$', action_raw)
-        if spawn_match:
-            args_str = spawn_match.group(1)
-            cmd_args = re.findall(r'"([^"]*)"', args_str)
-            if cmd_args:
-                exec_payload = ("exec", cmd_args)
-                if not desc:
-                    desc = " ".join(cmd_args)
-            else:
-                raw_cmd = args_str.replace('"', '').strip()
-                exec_payload = ("shell", raw_cmd)
-                if not desc:
-                    desc = raw_cmd
+        spawn = re.match(r"^spawn\s+(.+)$", action)
+        if spawn:
+            args = re.findall(r'"([^"]*)"', spawn.group(1))
+            payload = ("exec", args)
+            desc = comment or " ".join(args)
         else:
-            action_name = action_raw.split()[0]
-            exec_payload = ("niri", action_raw)
-            if not desc:
-                desc = BUILTIN_DESCRIPTIONS.get(action_name, action_raw)
+            payload = ("niri", action)
+            bare = action.replace('"', "")
+            desc = comment or NIRI_DESC.get(bare) or NIRI_DESC.get(bare.split()[0], bare)
 
-        desc = desc.strip()
+        if key == "Mod+1":
+            desc, payload = "Ir al espacio 1 … 9 (0 = 10)", None
+            keys = ["Super", "1 … 9"]
+        elif key == "Mod+Shift+1":
+            desc, payload = "Llevar columna al espacio 1 … 9", None
+            keys = ["Super", "Shift", "1 … 9"]
+        else:
+            keys = split_combo(key)
 
-        entries.append({
-            "key": key_display,
-            "desc": desc,
-            "payload": exec_payload,
-            "raw_key": key_raw
-        })
+        if key in ("Mod+Shift+H", "Mod+Shift+Slash"):
+            desc, sec, payload = "Esta hoja de atajos", "sistema", None
 
+        entries.append({"section": sec, "keys": [keys], "desc": desc,
+                        "payload": payload, "action": action})
     return entries
 
+
+# --- Lectura de kitty ------------------------------------------------------
+def parse_kitty():
+    path = first_existing(KITTY_PATHS)
+    if not path:
+        return []
+    entries = []
+    with open(path, encoding="utf-8") as f:
+        for raw in f:
+            m = re.match(r"^\s*map\s+(\S+)\s+(.+?)\s*$", raw)
+            if not m:
+                continue
+            combo, action = m.groups()
+            desc = None
+            for pattern, text in KITTY_DESC.items():
+                if action.startswith(pattern):
+                    desc = text
+                    break
+            if desc is None:
+                continue
+            keys = split_combo(combo)
+            if action.startswith("neighboring_window"):
+                keys = keys[:-1] + ["← ↑ → ↓"]
+            entries.append({"section": "kitty", "keys": [keys], "desc": desc,
+                            "payload": None, "action": action.split(" ")[0]
+                            if action.startswith("neighboring") else action})
+    return entries
+
+
+def merge_alternatives(entries):
+    """Une filas con la misma acción y sección (p. ej. Super+← y Super+H)."""
+    merged, index = [], {}
+    for e in entries:
+        ident = (e["section"], e["action"], e["desc"])
+        if ident in index:
+            target = merged[index[ident]]
+            if e["keys"][0] not in target["keys"]:
+                target["keys"].extend(e["keys"])
+        else:
+            index[ident] = len(merged)
+            merged.append(e)
+    return merged
+
+
+# --- Render ----------------------------------------------------------------
+def render_keys(alternatives, pal):
+    chip_bg = mix(pal["bg-alt"], pal["fg"], 0.12)
+    chip_fg = pal["fg"]
+    sep_fg = pal["border"]
+    out, width = [], 0
+    alternatives = sorted(alternatives, key=lambda ks: sum(len(k) + 3 for k in ks))
+    for i, keys in enumerate(alternatives):
+        need = sum(len(k) + 2 for k in keys) + len(keys) - 1
+        if i:
+            if width + 3 + need > KEYS_WIDTH - 2:
+                break  # la alternativa no cabe: se muestra solo la principal
+            out.append(f'<span fgcolor="{sep_fg}"> / </span>')
+            width += 3
+        for j, k in enumerate(keys):
+            if j:
+                out.append(" ")
+                width += 1
+            out.append(f'<span bgcolor="{chip_bg}" fgcolor="{chip_fg}"> {html.escape(k)} </span>')
+            width += len(k) + 2
+    pad = " " * max(2, KEYS_WIDTH - width)
+    return f'<span font_family="{MONO}" size="9pt">{"".join(out)}{pad}</span>'
+
+
+def build_rows(entries, pal):
+    rows, payloads = [], []
+    by_section = {}
+    for e in entries:
+        by_section.setdefault(e["section"], []).append(e)
+
+    for sec_id, title in SECTIONS:
+        items = by_section.get(sec_id)
+        if not items:
+            continue
+        header = (f'<span size="8pt" weight="bold" letter_spacing="1200" '
+                  f'fgcolor="{pal["accent"]}">{html.escape(title.upper())}</span>')
+        rows.append(f"{header}\0nonselectable\x1ftrue")
+        payloads.append(None)
+        for e in items:
+            desc = html.escape(e["desc"])
+            plain_keys = " ".join(" ".join(k) for k in e["keys"])
+            rows.append(f'{render_keys(e["keys"], pal)}{desc}'
+                        f'\0meta\x1f{html.escape(title)} {plain_keys}')
+            payloads.append(e["payload"])
+    return rows, payloads
+
+
+def run(payload):
+    if not payload:
+        return
+    kind, data = payload
+    if kind == "exec":
+        subprocess.Popen(data, start_new_session=True)
+    elif kind == "niri":
+        subprocess.Popen(["niri", "msg", "action"] + data.split(), start_new_session=True)
+
+
 def main():
-    entries = parse_niri_config()
+    pal = load_palette()
+    entries = merge_alternatives(parse_niri() + parse_kitty())
     if not entries:
         sys.exit(0)
+    rows, payloads = build_rows(entries, pal)
 
-    # Alinear en dos columnas limpias
-    max_key_len = max(len(e["key"]) for e in entries) + 4
+    mesg = (f'<span fgcolor="{pal["border"]}">'
+            "Escribe para filtrar   ·   Enter ejecuta   ·   Esc cierra</span>")
+    cmd = ["rofi", "-dmenu", "-i", "-markup-rows", "-format", "i",
+           "-p", "󰌌  Atajos", "-mesg", mesg, "-no-custom",
+           "-selected-row", "1"]
+    if os.path.isfile(THEME):
+        cmd += ["-theme", THEME]
 
-    lines = []
-    for e in entries:
-        line = f"{e['key'].ljust(max_key_len)}{e['desc']}"
-        lines.append(line)
-
-    input_text = "\n".join(lines)
-
-    rofi_cmd = [
-        "rofi",
-        "-dmenu",
-        "-i",
-        "-p", "Atajos",
-        "-format", "i"
-    ]
-
-    proc = subprocess.Popen(rofi_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
-    stdout, _ = proc.communicate(input=input_text)
-
-    if proc.returncode != 0 or not stdout.strip():
-        sys.exit(0)
-
+    proc = subprocess.run(cmd, input="\n".join(rows), capture_output=True, text=True)
+    if proc.returncode != 0 or not proc.stdout.strip():
+        return
     try:
-        selected_idx = int(stdout.strip())
-        selected_entry = entries[selected_idx]
-        payload = selected_entry["payload"]
-
-        if not payload:
-            sys.exit(0)
-
-        kind, data = payload
-        if kind == "exec":
-            subprocess.Popen(data)
-        elif kind == "shell":
-            subprocess.Popen(data, shell=True)
-        elif kind == "niri":
-            niri_action = data.split()
-            subprocess.Popen(["niri", "msg", "action"] + niri_action)
+        run(payloads[int(proc.stdout.strip())])
     except (ValueError, IndexError):
         pass
+
 
 if __name__ == "__main__":
     main()

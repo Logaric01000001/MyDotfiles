@@ -1,0 +1,55 @@
+/* Menú de energía: una fila de cinco botones. */
+@import "config.rasi"
+
+configuration {
+    show-icons:     false;
+}
+
+window {
+    width:          640px;
+    padding:        10px;
+}
+mainbox {
+    children:       [ "inputbar", "listview" ];
+}
+inputbar {
+    children:       [ "prompt", "textbox-hint" ];
+}
+textbox-hint {
+    expand:         true;
+    str:            "";
+    text-color:     @muted;
+    horizontal-align: 1;
+    vertical-align: 0.5;
+    font:           "Adwaita Sans 9.5";
+}
+listview {
+    columns:        5;
+    lines:          1;
+    flow:           horizontal;
+    fixed-columns:  true;
+    spacing:        8px;
+    padding:        10px 0 0 0;
+    fixed-height:   false;
+}
+element {
+    orientation:    vertical;
+    padding:        14px 6px 10px 6px;
+    border:         0;
+    border-radius:  12px;
+    background-color: @bg-alt;
+}
+element-text {
+    markup:         true;
+    horizontal-align: 0.5;
+}
+element normal.normal,
+element alternate.normal {
+    background-color: @bg-alt;
+    text-color:     @fg;
+}
+element selected,
+element selected.normal {
+    background-color: @accent;
+    text-color:     @accent-fg;
+}

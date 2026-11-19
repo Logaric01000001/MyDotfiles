@@ -198,24 +198,24 @@ binds {
     Mod+Shift+Q { close-window; }
     Mod+Q { close-window; }
 
-    Mod+L { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH lock-screen"; } // Bloquear
-    Mod+S { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH power-menu.sh"; } // Menu de energia
-    Mod+P       { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH display-mode.sh"; } // Modo de pantalla
-    Mod+Shift+D { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH display-mode.sh"; } // Modo de pantalla
+    Mod+L { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH lock-screen"; } // Bloquear pantalla
+    Mod+S { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH power-menu.sh"; } // Menú de energía
+    Mod+P       { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH display-mode.sh"; } // Modo de pantallas
+    Mod+Shift+D { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH display-mode.sh"; } // Modo de pantallas
     Mod+A { spawn "noctalia" "msg" "settings-open"; } // Ajustes de Noctalia
 
     // apps
     Mod+Return { spawn "kitty"; } // Terminal
     Mod+C { spawn "bash" "-c" "antigravity-ide || codium || vscodium || code"; } // Editor
-    Mod+D     { spawn "rofi" "-show" "drun"; } // Apps
-    Mod+Space { spawn "rofi" "-show" "drun"; } // Apps
+    Mod+D     { spawn "rofi" "-show" "drun"; } // Lanzador de aplicaciones
+    Mod+Space { spawn "rofi" "-show" "drun"; } // Lanzador de aplicaciones
     Mod+B { spawn "zen-browser"; } // Navegador
     Mod+E { spawn "dolphin"; } // Archivos
 
-    Mod+W       { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH set-wallpaper select-all"; } // Wallpaper (escritorio + sddm)
-    Mod+Ctrl+W  { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH set-wallpaper select-inside"; } // Wallpaper (escritorio)
-    Mod+Alt+W   { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH set-wallpaper select-outside"; } // Wallpaper (sddm)
-    Mod+Shift+W { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH set-wallpaper select-outside"; } // Wallpaper (sddm)
+    Mod+W       { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH set-wallpaper select-all"; } // Fondo: escritorio y pantalla de inicio
+    Mod+Ctrl+W  { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH set-wallpaper select-inside"; } // Fondo: solo escritorio
+    Mod+Alt+W   { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH set-wallpaper select-outside"; } // Fondo: solo pantalla de inicio
+    Mod+Shift+W { spawn "bash" "-c" "PATH=$HOME/.local/bin:$PATH set-wallpaper select-outside"; } // Fondo: solo pantalla de inicio
 
     // foco
     Mod+Left  { focus-column-left; }
@@ -292,13 +292,13 @@ binds {
     Mod+Tab        repeat=false { toggle-overview; } // Vista general de ventanas
     Mod+O          repeat=false { toggle-overview; } // Vista general de ventanas
     Mod+Ctrl+V     { spawn "noctalia" "msg" "panel-toggle" "clipboard"; } // Historial del portapapeles
-    Mod+N          { spawn "noctalia" "msg" "panel-toggle" "control-center"; } // Centro de control / notificaciones
+    Mod+N          { spawn "noctalia" "msg" "panel-toggle" "control-center"; } // Centro de control y notificaciones
     Mod+Shift+N    { spawn "noctalia" "msg" "notification-dnd-toggle"; } // No molestar
     Mod+Shift+S    { spawn "noctalia" "msg" "screenshot-annotate"; } // Captura con anotación
-    Mod+Shift+I    { spawn "noctalia" "msg" "caffeine-toggle"; } // Evitar suspensión (cafeína)
+    Mod+Shift+I    { spawn "noctalia" "msg" "caffeine-toggle"; } // Cafeína: evitar suspensión
     Mod+T          { toggle-column-tabbed-display; } // Columna en pestañas
-    Mod+Comma      { consume-or-expel-window-left; } // Apilar/sacar ventana (izq.)
-    Mod+Period     { consume-or-expel-window-right; } // Apilar/sacar ventana (der.)
+    Mod+Comma      { consume-or-expel-window-left; } // Apilar o sacar ventana (izquierda)
+    Mod+Period     { consume-or-expel-window-right; } // Apilar o sacar ventana (derecha)
     Mod+Shift+0    { move-column-to-workspace 10; }
     Mod+Ctrl+F     { expand-column-to-available-width; } // Expandir al espacio libre
 
@@ -310,11 +310,11 @@ binds {
 
     XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%+"; } // Subir volumen
     XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-"; } // Bajar volumen
-    XF86AudioMute        allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; } // Mute
-    XF86AudioMicMute     allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; } // Mute mic
-    XF86AudioPlay        allow-when-locked=true { spawn "playerctl" "play-pause"; } // Play/pausa
-    XF86AudioNext        allow-when-locked=true { spawn "playerctl" "next"; } // Siguiente
-    XF86AudioPrev        allow-when-locked=true { spawn "playerctl" "previous"; } // Anterior
+    XF86AudioMute        allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; } // Silenciar
+    XF86AudioMicMute     allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; } // Silenciar micrófono
+    XF86AudioPlay        allow-when-locked=true { spawn "playerctl" "play-pause"; } // Reproducir / pausa
+    XF86AudioNext        allow-when-locked=true { spawn "playerctl" "next"; } // Pista siguiente
+    XF86AudioPrev        allow-when-locked=true { spawn "playerctl" "previous"; } // Pista anterior
 
     XF86MonBrightnessUp   allow-when-locked=true { spawn "brightnessctl" "set" "+5%"; } // Subir brillo
     XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "set" "5%-"; } // Bajar brillo
