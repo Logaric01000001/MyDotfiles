@@ -152,7 +152,10 @@ widget_order = [ "lockscreen-login-box@HDMI-A-1", "lockscreen-login-box@winit", 
 colorize_icons = true
 
 [shell]
+font_family = "Adwaita Sans"
 lang = "es"
+niri_overview_close_on_launch_enabled = true
+niri_overview_type_to_launch_enabled = true
 panel_anchor_bar = "default"
 polkit_colorize_icons = true
 screen_time_colorize_icons = true
