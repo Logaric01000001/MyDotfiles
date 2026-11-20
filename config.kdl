@@ -13,6 +13,12 @@ spawn-at-startup "swayidle" "-w" \
 
 prefer-no-csd
 
+// sin el panel "Important Hotkeys" de niri al iniciar: la hoja propia es Super+Shift+H
+hotkey-overlay {
+    skip-at-startup
+    hide-not-bound
+}
+
 cursor {
     xcursor-theme "Bibata-Modern-Ice"
     xcursor-size 24
@@ -96,7 +102,7 @@ layout {
     default-column-width { proportion 0.5; }
 
     focus-ring {
-        width 3
+        width 2
         // colores: noctalia.kdl (siguen al fondo de pantalla)
     }
 

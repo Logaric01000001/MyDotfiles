@@ -11,7 +11,7 @@
 configuration {
     modi:                   "drun,run";
     show-icons:             true;
-    icon-theme:             "Catppuccin-Mocha";
+    icon-theme:             "Papirus-Dark";
     font:                   "Adwaita Sans 11";
     display-drun:           "";
     display-run:            "";

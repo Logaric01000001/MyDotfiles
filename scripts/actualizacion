@@ -263,6 +263,28 @@ else
     log_ok "Paquetes nativos y AUR actualizados correctamente."
 fi
 
+# Paquetes AUR que usan APIs privadas de Qt: hay que recompilarlos cuando Qt cambia
+# de versión menor (si no, su plugin deja de cargar y las apps Qt pierden el tema).
+QT_STAMP="$HOME/.cache/actualizacion/qt6-version"
+QT_NOW=$(pacman -Q qt6-base 2>/dev/null | awk '{print $2}' | cut -d. -f1,2)
+if [ -n "$QT_NOW" ] && command -v paru >/dev/null 2>&1; then
+    mkdir -p "$(dirname "$QT_STAMP")"
+    if [ "$(cat "$QT_STAMP" 2>/dev/null)" != "$QT_NOW" ]; then
+        QT_REBUILD=()
+        for p in qt6ct-kde qt5ct-kde; do pacman -Q "$p" >/dev/null 2>&1 && QT_REBUILD+=("$p"); done
+        if [ ${#QT_REBUILD[@]} -gt 0 ]; then
+            log_info "Qt $QT_NOW detectado: recompilando ${QT_REBUILD[*]}..."
+            if paru -S --rebuild --noconfirm "${QT_REBUILD[@]}"; then
+                echo "$QT_NOW" > "$QT_STAMP"; log_ok "Plugins de Qt recompilados."
+            else
+                log_err "No se pudo recompilar ${QT_REBUILD[*]} (las apps Qt pueden perder el tema)."
+            fi
+        else
+            echo "$QT_NOW" > "$QT_STAMP"
+        fi
+    fi
+fi
+
 # -----------------------------------------------------------------------------
 # FASE 4: Aplicaciones Flatpak
 # -----------------------------------------------------------------------------
@@ -384,6 +406,8 @@ if [ "$SKIP_SYNC" = false ] && [ -d "$DOTFILES_DIR" ]; then
             sed "s|__HOME__|$HOME|g" "$DOTFILES_DIR/qt/qt${v}ct.conf" > "$HOME/.config/qt${v}ct/qt${v}ct.conf"
         fi
     done
+    # una actualización de papirus restablece las carpetas azules
+    command -v papirus-gris >/dev/null 2>&1 && papirus-gris >/dev/null 2>&1 || true
     log_ok "Temas de menús, prompt, bloqueo y Qt sincronizados."
 
     # Recargar Niri si está corriendo

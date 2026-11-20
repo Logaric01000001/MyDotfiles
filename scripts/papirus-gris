@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Carpetas de Papirus en gris neutro (encaja con cualquier paleta de Noctalia).
+# Reapunta los enlaces folder-blue* / user-blue* a su variante del color pedido.
+# Uso: papirus-gris [color]   (por defecto: grey)
+set -euo pipefail
+color="${1:-grey}"
+SUDO=""
+base="$HOME/.local/share/icons/Papirus"
+if [ ! -d "$base" ]; then
+    base="/usr/share/icons/Papirus"
+    [ -d "$base" ] || { echo "Papirus no está instalado" >&2; exit 1; }
+    [ -w "$base" ] || SUDO="sudo"
+fi
+n=0
+while IFS= read -r -d '' link; do
+    target="$(readlink "$link")"
+    case "$target" in
+        folder-*.svg|user-*.svg) ;;
+        *) continue ;;
+    esac
+    new="$(printf '%s' "$target" | sed -E "s/^(folder|user)-[a-z]+(-|\.svg)/\1-${color}\2/")"
+    [ "$new" = "$target" ] && continue
+    [ -e "$(dirname "$link")/$new" ] || continue
+    $SUDO ln -sfn "$new" "$link"; n=$((n + 1))
+done < <(find "$base" -path '*/places/*' -type l -print0)
+$SUDO gtk-update-icon-cache -qf "$base" 2>/dev/null || true
+echo "Carpetas en '$color': $n enlaces actualizados"

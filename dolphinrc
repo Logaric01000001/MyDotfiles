@@ -3,10 +3,9 @@
 1366x768 screen: Width=891
 
 [General]
+RememberOpenedTabs=false
+ShowFullPath=false
 Version=202
-
-[Icons]
-Theme=TokyoNight
 
 [KFileDialog Settings]
 Places Icons Auto-resize=false
@@ -16,8 +15,8 @@ Places Icons Static Size=22
 MenuBar=Disabled
 
 [MainWindow][Toolbar mainToolBar]
-IconSize=32
+IconSize=22
 ToolButtonStyle=IconOnly
 
 [UiSettings]
-ColorScheme=KvArcDark
+ColorScheme=noctalia

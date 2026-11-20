@@ -27,7 +27,7 @@ PKGS=(
     starship eza zoxide fuzzel cliphist kvantum kvantum-qt5
     pipewire wireplumber pipewire-pulse pipewire-alsa brightnessctl playerctl polkit-gnome
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk
-    ttf-jetbrains-mono-nerd adwaita-fonts noto-fonts-emoji breeze-icons qt5ct imagemagick
+    ttf-jetbrains-mono-nerd adwaita-fonts noto-fonts-emoji papirus-icon-theme breeze-icons qt5ct imagemagick
     wl-clipboard grim slurp
     bat btop fzf lazygit pacman-contrib lsof nwg-displays
     networkmanager bluez bluez-utils sddm
@@ -273,11 +273,13 @@ if [ ! -d "$HOME/.local/share/themes/adw-gtk3-dark" ] && [ ! -d /usr/share/theme
 fi
 if command -v gsettings &>/dev/null; then
     gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark' 2>/dev/null || true
-    gsettings set org.gnome.desktop.interface icon-theme 'breeze-dark' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark' 2>/dev/null || true
     gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice' 2>/dev/null || true
     gsettings set org.gnome.desktop.interface font-name 'Adwaita Sans 10.5' 2>/dev/null || true
     gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
 fi
+# carpetas de Papirus en gris neutro
+[ -x "$DOTFILES_DIR/scripts/papirus-gris" ] && "$DOTFILES_DIR/scripts/papirus-gris" || true
 
 # qt5/qt6 (qt6ct + paleta de Noctalia) y btop
 for v in 5 6; do
@@ -292,7 +294,7 @@ install_file "$DOTFILES_DIR/btop/btop.conf" "$HOME/.config/btop/btop.conf"
 if command -v kwriteconfig6 &>/dev/null; then
     kwriteconfig6 --file kdeglobals --group General --key TerminalApplication kitty
     kwriteconfig6 --file kdeglobals --group General --key TerminalService kitty.desktop
-    kwriteconfig6 --file kdeglobals --group Icons --key Theme breeze-dark
+    kwriteconfig6 --file kdeglobals --group Icons --key Theme Papirus-Dark
 elif command -v kwriteconfig5 &>/dev/null; then
     kwriteconfig5 --file kdeglobals --group General --key TerminalApplication kitty
     kwriteconfig5 --file kdeglobals --group General --key TerminalService kitty.desktop
