@@ -1,8 +1,9 @@
 [General]
-theme=KvArcDark
+theme=Noctalia
 
 [Applications]
 KvArcDark\translucent_windows=false
 KvArcDark\transparent_dolphin_view=false
 KvAdaptaDark\translucent_windows=false
 KvAdaptaDark\transparent_dolphin_view=false
+

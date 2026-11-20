@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+"""Genera el tema Kvantum "Noctalia" con la paleta actual de Noctalia.
+
+Base: KvGnomeDark (formas planas y neutras). Los colores salen de
+~/.local/share/color-schemes/noctalia.colors, que Noctalia regenera al cambiar
+el fondo. Lo ejecuta automáticamente kvantum-noctalia.path (systemd --user).
+
+Kvantum no depende de qt6ct, así que el tema sigue funcionando aunque Qt se
+actualice y el plugin de qt6ct-kde quede desfasado.
+"""
+import configparser
+import os
+import sys
+
+HOME = os.path.expanduser("~")
+SCHEME = f"{HOME}/.local/share/color-schemes/noctalia.colors"
+BASE_DIR = "/usr/share/Kvantum/KvGnomeDark"
+OUT_DIR = f"{HOME}/.config/Kvantum/Noctalia"
+MAIN_CFG = f"{HOME}/.config/Kvantum/kvantum.kvconfig"
+
+
+def rgb(value, alpha=None):
+    r, g, b = (int(x) for x in value.split(",")[:3])
+    hexa = f"#{r:02x}{g:02x}{b:02x}"
+    return hexa + (f"{alpha:02x}" if alpha is not None else "")
+
+
+def mix(a, b, t):
+    ca = [int(a[i:i + 2], 16) for i in (1, 3, 5)]
+    cb = [int(b[i:i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(f"{round(x + (y - x) * t):02x}" for x, y in zip(ca, cb))
+
+
+def main():
+    if not os.path.isfile(SCHEME) or not os.path.isdir(BASE_DIR):
+        sys.exit("falta noctalia.colors o el tema base KvGnomeDark")
+
+    sch = configparser.ConfigParser(interpolation=None, strict=False)
+    sch.optionxform = str
+    sch.read(SCHEME)
+    c = lambda grp, key: rgb(sch[f"Colors:{grp}"][key])
+
+    window = c("Window", "BackgroundNormal")
+    base = c("View", "BackgroundNormal")
+    alt = c("View", "BackgroundAlternate")
+    button = c("Button", "BackgroundNormal")
+    text = c("View", "ForegroundNormal")
+    wtext = c("Window", "ForegroundNormal")
+    muted = c("View", "ForegroundInactive")
+    # selección sutil (gris elevado + texto claro), igual que rofi y Noctalia
+    sel = mix(window, text, 0.17)
+    seltext = text
+    link = c("View", "ForegroundLink")
+
+    colors = {
+        "window.color": window,
+        "inactive.window.color": window,
+        "base.color": base,
+        "inactive.base.color": base,
+        "alt.base.color": alt,
+        "inactive.alt.base.color": alt,
+        "button.color": button,
+        "light.color": mix(button, text, 0.25),
+        "mid.light.color": mix(button, text, 0.18),
+        "dark.color": mix(base, "#000000", 0.5),
+        "mid.color": mix(button, text, 0.08),
+        "highlight.color": sel,
+        "inactive.highlight.color": mix(sel, base, 0.35),
+        "text.color": text,
+        "inactive.text.color": text + "c8",
+        "window.text.color": wtext,
+        "inactive.window.text.color": wtext + "b4",
+        "button.text.color": wtext,
+        "disabled.text.color": muted + "80",
+        "tooltip.text.color": wtext,
+        "highlight.text.color": seltext,
+        "link.color": link,
+        "link.visited.color": muted,
+        "progress.indicator.text.color": seltext,
+    }
+
+    os.makedirs(OUT_DIR, exist_ok=True)
+    # SVG base con el acento azul/morado sustituido por el de la paleta
+    with open(f"{BASE_DIR}/KvGnomeDark.svg", encoding="utf-8") as f:
+        svg = f.read()
+    for accent in ("#15539e", "#15539E", "#b74aff", "#B74AFF"):
+        svg = svg.replace(accent, sel)
+    with open(f"{OUT_DIR}/Noctalia.svg", "w", encoding="utf-8") as f:
+        f.write(svg)
+
+    with open(f"{BASE_DIR}/KvGnomeDark.kvconfig", encoding="utf-8") as f:
+        lines = f.read().splitlines()
+
+    out, section = [], None
+    for line in lines:
+        s = line.strip()
+        if s.startswith("[") and s.endswith("]"):
+            section = s[1:-1]
+        elif section == "GeneralColors" and "=" in s:
+            key = s.split("=", 1)[0].strip()
+            if key in colors:
+                line = f"{key}={colors.pop(key)}"
+        elif section == "Hacks" and s.startswith("transparent_dolphin_view"):
+            line = "transparent_dolphin_view=false"
+        out.append(line)
+        if s == "[GeneralColors]":
+            pass
+    # claves que KvGnomeDark no define: añadir al final de [GeneralColors]
+    if colors:
+        idx = next(i for i, l in enumerate(out) if l.strip() == "[GeneralColors]") + 1
+        for k, v in colors.items():
+            out.insert(idx, f"{k}={v}")
+
+    tmp = f"{OUT_DIR}/Noctalia.kvconfig.tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write("\n".join(out) + "\n")
+    os.replace(tmp, f"{OUT_DIR}/Noctalia.kvconfig")
+
+    # activar el tema en Kvantum (sin tocar el resto del archivo)
+    main_cfg = configparser.ConfigParser(interpolation=None, strict=False)
+    main_cfg.optionxform = str
+    if os.path.isfile(MAIN_CFG):
+        main_cfg.read(MAIN_CFG)
+    if not main_cfg.has_section("General"):
+        main_cfg.add_section("General")
+    if main_cfg["General"].get("theme") != "Noctalia":
+        main_cfg["General"]["theme"] = "Noctalia"
+        with open(MAIN_CFG, "w", encoding="utf-8") as f:
+            main_cfg.write(f, space_around_delimiters=False)
+    print(f"Kvantum Noctalia: fondo {window}, texto {text}, selección {sel}")
+
+
+if __name__ == "__main__":
+    main()

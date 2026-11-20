@@ -1,0 +1,9 @@
+[Unit]
+Description=Regenerar tema Kvantum cuando Noctalia cambie la paleta
+
+[Path]
+PathChanged=%h/.local/share/color-schemes/noctalia.colors
+Unit=kvantum-noctalia.service
+
+[Install]
+WantedBy=default.target

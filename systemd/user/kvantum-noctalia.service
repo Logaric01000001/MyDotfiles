@@ -1,0 +1,6 @@
+[Unit]
+Description=Generar tema Kvantum "Noctalia" con la paleta actual
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/kvantum-noctalia

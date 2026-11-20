@@ -370,10 +370,13 @@ if [ -d "$DOTFILES_DIR/systemd/user" ]; then
     mkdir -p "$HOME/.config/systemd/user"
     cp -f "$DOTFILES_DIR/systemd/user/"*.service "$HOME/.config/systemd/user/" 2>/dev/null || true
     cp -f "$DOTFILES_DIR/systemd/user/"*.timer "$HOME/.config/systemd/user/" 2>/dev/null || true
+    cp -f "$DOTFILES_DIR/systemd/user/"*.path "$HOME/.config/systemd/user/" 2>/dev/null || true
     if command -v systemctl &>/dev/null; then
         systemctl --user daemon-reload 2>/dev/null || true
         systemctl --user enable --now limpia.timer 2>/dev/null || true
         systemctl --user enable --now limpia-profunda.timer 2>/dev/null || true
+        "$HOME/.local/bin/kvantum-noctalia" 2>/dev/null || true
+        systemctl --user enable --now kvantum-noctalia.path 2>/dev/null || true
     fi
 fi
 
