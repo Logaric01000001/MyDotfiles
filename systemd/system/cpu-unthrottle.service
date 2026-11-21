@@ -1,0 +1,10 @@
+[Unit]
+Description=Liberar la CPU del bloqueo a 400 MHz (BD PROCHOT)
+After=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/cpu-unthrottle
+
+[Install]
+WantedBy=multi-user.target suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target

@@ -23,7 +23,7 @@ fi
 
 PKGS=(
     base-devel git niri hyprlock swaylock swaybg swayidle
-    rofi-wayland wl-mirror kitty dolphin fastfetch zsh
+    rofi wl-mirror kitty dolphin fastfetch zsh
     starship eza zoxide fuzzel cliphist kvantum kvantum-qt5
     pipewire wireplumber pipewire-pulse pipewire-alsa brightnessctl playerctl polkit-gnome
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk
@@ -43,6 +43,8 @@ PKGS=(
     # desarrollo y sistema
     go ninja meson ast-grep chrpath asar python-tqdm
     age socat cronie run-parts cloudflared
+    # salud del equipo (corrector de CPU a 400 MHz y sensores)
+    msr-tools lm_sensors
 )
 
 OPT_NO_SUDO=false
@@ -102,7 +104,12 @@ echo "instalando paquetes..."
 if command -v pacman &>/dev/null; then
     if [ "$CAN_SUDO" = true ]; then
         if check_pacman_lock; then
-            sudo pacman -S --needed --noconfirm "${PKGS[@]}" 2>/dev/null || true
+            # solo los que existen en los repos: uno renombrado no debe tumbar la transacción
+            mapfile -t REPO_PKGS < <({ pacman -Slq; pacman -Sg | awk '{print $1}'; } 2>/dev/null | sort -u)
+            mapfile -t OK_PKGS < <(printf '%s\n' "${PKGS[@]}" | sort -u | comm -12 - <(printf '%s\n' "${REPO_PKGS[@]}"))
+            FALTAN=$(printf '%s\n' "${PKGS[@]}" | sort -u | comm -23 - <(printf '%s\n' "${REPO_PKGS[@]}") | paste -sd' ')
+            [ -n "$FALTAN" ] && echo "aviso: no están en los repos: $FALTAN"
+            sudo pacman -S --needed --noconfirm "${OK_PKGS[@]}" || echo "aviso: pacman terminó con errores"
         fi
     else
         echo "aviso: sin permisos de sudo inmediatos, se omiten paquetes de pacman que requieran root"
@@ -375,6 +382,8 @@ if [ -d "$DOTFILES_DIR/systemd/user" ]; then
         systemctl --user daemon-reload 2>/dev/null || true
         systemctl --user enable --now limpia.timer 2>/dev/null || true
         systemctl --user enable --now limpia-profunda.timer 2>/dev/null || true
+        systemctl --user enable --now cpu-guard.timer 2>/dev/null || true
+        rm -f "$HOME/.local/bin/cpu-guard.sh"
         "$HOME/.local/bin/kvantum-noctalia" 2>/dev/null || true
         systemctl --user enable --now kvantum-noctalia.path 2>/dev/null || true
     fi
@@ -452,15 +461,34 @@ if [ "$CAN_SUDO" = true ]; then
         sudo systemctl restart bluetooth 2>/dev/null || true
     fi
 
-    # iwd entra en conflicto con wpa_supplicant en networkmanager
+    # wifi estable: NetworkManager + wpa_supplicant, sin iwd peleando por la tarjeta
     if systemctl list-unit-files NetworkManager.service &>/dev/null; then
         sudo systemctl disable --now iwd 2>/dev/null || true
         sudo systemctl mask iwd 2>/dev/null || true
-        printf '[device]\nwifi.backend=wpa_supplicant\n' | sudo tee /etc/NetworkManager/conf.d/wifi-backend.conf >/dev/null 2>&1 || true
+        sudo mkdir -p /etc/NetworkManager/conf.d
+        printf '[device]\nwifi.backend=wpa_supplicant\n' | sudo tee /etc/NetworkManager/conf.d/wifi-backend.conf >/dev/null
+        printf '[connection]\nwifi.powersave = 2\n' | sudo tee /etc/NetworkManager/conf.d/wifi-powersave.conf >/dev/null
+        # RTL8821CE (rtw88): ASPM y LPS profundo provocan errores PCIe y cortes
         if lspci 2>/dev/null | grep -qi "RTL8821CE"; then
             sudo rm -f /etc/modprobe.d/rtl8821ce.conf
-            printf 'options rtw88_pci disable_aspm=y\noptions rtw88_core disable_lps_deep=y\n' | sudo tee /etc/modprobe.d/rtw88.conf >/dev/null 2>&1 || true
+            rtw_conf='options rtw88_pci disable_aspm=y\noptions rtw88_core disable_lps_deep=y\n'
+            if ! printf "$rtw_conf" | cmp -s - /etc/modprobe.d/rtw88.conf; then
+                printf "$rtw_conf" | sudo tee /etc/modprobe.d/rtw88.conf >/dev/null
+                WIFI_RELOAD=true
+            fi
+            [ "$(cat /sys/module/rtw88_pci/parameters/disable_aspm 2>/dev/null)" = N ] && WIFI_RELOAD=true
         fi
+        sudo systemctl reload NetworkManager 2>/dev/null || true
+    fi
+
+    # cpu clavada a 400 MHz por el firmware (BD PROCHOT): corrector al arrancar,
+    # al volver de suspensión, al (des)enchufar el cargador y cada minuto
+    if grep -q GenuineIntel /proc/cpuinfo && [ -f "$DOTFILES_DIR/scripts/cpu-unthrottle" ]; then
+        sudo install -m 755 "$DOTFILES_DIR/scripts/cpu-unthrottle" /usr/local/bin/cpu-unthrottle
+        echo msr | sudo tee /etc/modules-load.d/msr.conf >/dev/null
+        sudo install -m 644 "$DOTFILES_DIR/systemd/udev/99-cpu-unthrottle.rules" /etc/udev/rules.d/99-cpu-unthrottle.rules
+        sudo udevadm control --reload 2>/dev/null || true
+        CPU_UNTHROTTLE=true
     fi
 
     # evitar suspension automatica al cerrar la tapa o por inactividad
@@ -489,6 +517,11 @@ if [ "$CAN_SUDO" = true ]; then
         sudo cp -f "$DOTFILES_DIR/systemd/system/"*.timer /etc/systemd/system/ 2>/dev/null || true
         sudo systemctl daemon-reload 2>/dev/null || true
         sudo systemctl enable --now limpia.timer 2>/dev/null || true
+        if [ "${CPU_UNTHROTTLE:-false}" = true ]; then
+            sudo systemctl enable cpu-unthrottle.service 2>/dev/null || true
+            sudo systemctl enable --now cpu-unthrottle.timer 2>/dev/null || true
+            sudo systemctl start cpu-unthrottle.service 2>/dev/null || true
+        fi
     fi
 else
     echo "aviso: sin permisos de root/sudo en este momento; se omiten configuraciones del sistema (/etc/)"
@@ -502,6 +535,13 @@ fi
 # recargar niri si esta corriendo
 if pgrep -x niri &>/dev/null; then
     niri msg action load-config-file 2>/dev/null || true
+fi
+
+# recargar el driver wifi con las opciones nuevas (corte de ~5 s; NetworkManager reconecta solo)
+if [ "${WIFI_RELOAD:-false}" = true ]; then
+    echo "recargando driver wifi (rtw88)..."
+    sudo modprobe -r rtw88_8821ce 2>/dev/null && sudo modprobe rtw88_8821ce 2>/dev/null \
+        || echo "aviso: no se pudo recargar el driver wifi; reinicia para aplicar los cambios"
 fi
 
 [ -d "$BACKUP_DIR" ] && echo "backup guardado en $BACKUP_DIR"

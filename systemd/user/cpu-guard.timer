@@ -1,0 +1,11 @@
+[Unit]
+Description=Comprobar estado de la CPU cada 2 minutos
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=2min
+AccuracySec=30s
+Unit=cpu-guard.service
+
+[Install]
+WantedBy=timers.target

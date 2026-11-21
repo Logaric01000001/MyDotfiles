@@ -1,0 +1,6 @@
+[Unit]
+Description=Vigilante de CPU (bloqueo a 400 MHz y temperatura)
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/cpu-guard

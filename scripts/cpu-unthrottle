@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# cpu-unthrottle: libera la CPU cuando el firmware la deja clavada a 400 MHz.
+#
+# En portátiles HP (y otros) el controlador embebido activa BD PROCHOT
+# (bit 0 del MSR 0x1FC) por fallos del cargador/batería y la CPU se queda
+# al mínimo aunque esté fría. Se limpia ese bit solo si la temperatura es
+# normal; la protección térmica interna de la CPU (TjMax) sigue activa.
+#
+# Uso: cpu-unthrottle          aplica la corrección (root)
+#      cpu-unthrottle estado   muestra temperatura, frecuencia y BD PROCHOT
+set -uo pipefail
+
+MSR=0x1FC
+LIMITE_C=85
+
+[ "$(id -u)" -eq 0 ] || exec sudo "$0" "$@"
+grep -q GenuineIntel /proc/cpuinfo || exit 0
+command -v rdmsr >/dev/null || { echo "cpu-unthrottle: falta msr-tools" >&2; exit 1; }
+modprobe msr 2>/dev/null || true
+
+temp=0
+for z in /sys/class/thermal/thermal_zone*; do
+    [ "$(cat "$z/type" 2>/dev/null)" = x86_pkg_temp ] && temp=$(( $(cat "$z/temp") / 1000 ))
+done
+
+prochot() { (( $(rdmsr -p "$1" -c "$MSR" 2>/dev/null || echo 0) & 1 )); }
+
+if [ "${1:-}" = estado ]; then
+    mhz=$(awk -F: '/cpu MHz/{if($2+0>m)m=$2+0} END{printf "%d", m}' /proc/cpuinfo)
+    prochot 0 && bd=activo || bd=desactivado
+    printf 'temperatura  %s °C\nfrecuencia   %s MHz (máx. actual)\nBD PROCHOT   %s\n' "$temp" "$mhz" "$bd"
+    exit 0
+fi
+
+if [ "$temp" -ge "$LIMITE_C" ]; then
+    logger -t cpu-unthrottle "CPU a ${temp} °C: se respeta el limitador"
+    exit 0
+fi
+
+n=0
+for dev in /dev/cpu/[0-9]*; do
+    cpu=${dev##*/}
+    v=$(rdmsr -p "$cpu" -c "$MSR" 2>/dev/null) || continue
+    if (( v & 1 )); then
+        wrmsr -p "$cpu" "$MSR" "$(printf '0x%x' $(( v & ~1 )))" && n=$((n + 1))
+    fi
+done
+[ "$n" -gt 0 ] && logger -t cpu-unthrottle "BD PROCHOT desactivado en $n CPU (${temp} °C)"
+exit 0

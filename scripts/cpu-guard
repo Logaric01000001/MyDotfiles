@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# cpu-guard: avisa si la CPU sigue clavada a ~400 MHz con carga (cuando
+# cpu-unthrottle no pudo liberarla) o si la temperatura se mantiene alta.
+set -uo pipefail
+
+STATE="${XDG_RUNTIME_DIR:-/tmp}/cpu-guard.count"
+TEMPSTATE="${XDG_RUNTIME_DIR:-/tmp}/cpu-guard.temp"
+
+MAX=$(awk -F: '/cpu MHz/{if($2+0>m)m=$2+0} END{printf "%d", m}' /proc/cpuinfo)
+LOAD=$(awk '{printf "%d", $1}' /proc/loadavg)
+TEMP=0
+for z in /sys/class/thermal/thermal_zone*; do
+    [ "$(cat "$z/type" 2>/dev/null)" = x86_pkg_temp ] && TEMP=$(( $(cat "$z/temp") / 1000 ))
+done
+
+# 1) CPU bloqueada a ~400 MHz con carga durante 3 comprobaciones seguidas
+if [ "$MAX" -lt 1000 ] && [ "$LOAD" -ge 2 ]; then
+    n=$(( $(cat "$STATE" 2>/dev/null || echo 0) + 1 ))
+else
+    n=0
+fi
+echo "$n" > "$STATE"
+
+if [ "$n" -ge 3 ]; then
+    notify-send -u critical -a "Sistema" \
+        "CPU limitada a ${MAX} MHz" \
+        "El corrector automático no pudo liberarla. Ejecuta: cpu-unthrottle estado"
+    logger -t cpu-guard "CPU ${MAX} MHz, carga ${LOAD}, ${TEMP} °C"
+    echo 0 > "$STATE"
+    exit 0
+fi
+
+# 2) temperatura alta sostenida
+if [ "$TEMP" -ge 90 ]; then
+    t=$(( $(cat "$TEMPSTATE" 2>/dev/null || echo 0) + 1 ))
+    if [ "$t" -ge 4 ]; then
+        notify-send -u normal -a "Sistema" \
+            "Temperatura alta: ${TEMP} °C" \
+            "Lleva varios minutos por encima de 90 °C. Cierra cargas pesadas o revisa la ventilación."
+        t=0
+    fi
+    echo "$t" > "$TEMPSTATE"
+else
+    echo 0 > "$TEMPSTATE"
+fi

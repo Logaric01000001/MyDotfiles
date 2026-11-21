@@ -1,0 +1,2 @@
+# Al enchufar o desenchufar el cargador el firmware puede volver a bloquear la CPU
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ACTION=="change", RUN+="/usr/bin/systemctl --no-block start cpu-unthrottle.service"

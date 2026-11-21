@@ -203,3 +203,5 @@ export PATH="$PNPM_HOME/bin:$PATH"
 typeset -U path
 # acme.sh (si está instalado)
 [ -f "$HOME/.acme.sh/acme.sh.env" ] && source "$HOME/.acme.sh/acme.sh.env"
+# claude con el token de GitHub del MCP desde pass (sin secretos en disco)
+command -v pass >/dev/null && claude() { GITHUB_PERSONAL_ACCESS_TOKEN="$(pass show github/mcp 2>/dev/null)" command claude "$@"; }
