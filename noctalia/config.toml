@@ -50,13 +50,36 @@ end = [
 # CONFIGURACIÓN DE WIDGETS
 # -----------------------------------------------------------------------------
 
-# Widget: Reproductor Multimedia (Truncado y límites de tamaño)
+# Reproductor: solo aparece cuando hay algo sonando
 [widget.media]
 type = "media"
-max_length = 160.0      # Límite máximo de ancho para no empujar otros elementos
+max_length = 220.0
 min_length = 60.0
 art_size = 18.0
 title_scroll = "none"
+hide_when_no_media = true
+
+# Estado: solo iconos; el valor aparece al pasar el ratón (peek)
+[widget.network]
+type = "network"
+peek = true
+
+[widget.volume]
+type = "volume"
+peek = true
+
+[widget.brightness]
+type = "brightness"
+peek = true
+
+[widget.bluetooth]
+type = "bluetooth"
+hide_when_adapter_off = true
+
+[widget.battery]
+type = "battery"
+display_mode = "graphic"
+label_content = "percent"
 
 # Widget: Reloj
 [widget.clock]
