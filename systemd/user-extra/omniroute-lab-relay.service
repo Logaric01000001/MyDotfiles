@@ -1,0 +1,12 @@
+[Unit]
+Description=Private Unix socket relay to local OmniRoute
+After=network.target
+[Service]
+Type=simple
+Environment=LAB_OMNI_SOCKET=/home/logaric/security-lab/runtime/omni.sock
+ExecStart=/usr/bin/python3 /home/logaric/security-lab/agent/omni_relay.py host
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+[Install]
+WantedBy=default.target

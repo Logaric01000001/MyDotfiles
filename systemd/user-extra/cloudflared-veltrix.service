@@ -1,0 +1,12 @@
+[Unit]
+Description=Cloudflare Tunnel for Veltrix
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/cloudflared tunnel --config /home/logaric/.cloudflared/config.yml run veltrix-local
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

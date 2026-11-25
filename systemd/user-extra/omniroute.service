@@ -1,0 +1,13 @@
+[Unit]
+Description=OmniRoute AI Gateway
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/logaric/.local/share/pnpm/bin/omniroute
+Environment=OMNIROUTE_SERVER_HOST=127.0.0.1
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,12 @@
+[Unit]
+Description=Security Lab domain scope updater for native Claude Code
+After=network.target
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/logaric/security-lab/agent/scope_daemon.py
+WorkingDirectory=/home/logaric/security-lab
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+[Install]
+WantedBy=default.target

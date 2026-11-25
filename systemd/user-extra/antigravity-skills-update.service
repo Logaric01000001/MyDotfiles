@@ -1,0 +1,10 @@
+[Unit]
+Description=Antigravity Community Skills Automatic Daily Update Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash "/home/logaric/MyDotfiles/skills/install-antigravity-skills.sh" --update
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,10 @@
+[Unit]
+Description=vpsoracle · un intento prudente de VM Always Free
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/logaric/Proyectos/VPSoracle/bin/vpsoracle attempt --scheduled
+TimeoutStartSec=15min
+Nice=10
